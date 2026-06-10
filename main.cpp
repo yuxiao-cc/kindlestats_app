@@ -19,6 +19,9 @@ int main(int argc, char *argv[]) {
     // 创建主窗口
     window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     
+    // 设置特殊的窗口标题以通过 Kindle Awesome 窗口管理器进行渲染和捕获输入
+    gtk_window_set_title(GTK_WINDOW(window), "L:A_N:application_ID:kindlestats");
+    
     // 设置全屏和无边框（为了完美适配 Kindle 的黑白墨水屏）
     gtk_window_fullscreen(GTK_WINDOW(window));
     gtk_window_set_decorated(GTK_WINDOW(window), FALSE);
