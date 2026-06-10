@@ -16,10 +16,10 @@ jobs:
 
     - name: Build natively inside ARM container
       run: |
-        docker run --rm --platform linux/arm/v5 \
+        docker run --rm \
           -v ${{ github.workspace }}:/workspace \
           -w /workspace \
-          debian:bullseye bash -c "
+          arm32v5/debian:bullseye bash -c "
             apt-get update -y &&
             apt-get install -y g++ libgtk2.0-dev pkg-config file &&
             g++ main.cpp -o kindlestats_app \
