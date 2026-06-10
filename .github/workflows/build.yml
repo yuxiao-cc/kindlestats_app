@@ -11,37 +11,23 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Install host dependencies
-      run: |
-        sudo apt-get update -y
-        sudo apt-get install -y wget tar xz-utils meson pkg-config file python3 python3-pip
+    - name: Set up QEMU (ARM emulation)
+      uses: docker/setup-qemu-action@v3
 
-    - name: Download koxtoolchain (pre-built Kindle cross-compiler)
+    - name: Build natively inside ARM container
       run: |
-        mkdir -p $HOME/x-tools
-        wget -q https://github.com/koreader/koxtoolchain/releases/latest/download/kindlepw2.tar.gz -O /tmp/kindlepw2.tar.gz
-        tar -xf /tmp/kindlepw2.tar.gz -C $HOME/x-tools
-        echo "$HOME/x-tools/arm-kindlepw2-linux-gnueabi/bin" >> $GITHUB_PATH
-
-    - name: Download kindle-sdk (GTK2 sysroot for Kindle)
-      run: |
-        git clone --recursive --depth=1 https://github.com/KindleModding/kindle-sdk.git /tmp/kindle-sdk
-        cd /tmp/kindle-sdk
-        chmod +x ./gen-sdk.sh
-        ./gen-sdk.sh kindlepw2
-
-    - name: Compile Application
-      run: |
-        export PATH="$HOME/x-tools/arm-kindlepw2-linux-gnueabi/bin:$PATH"
-        CROSS_FILE="$HOME/x-tools/arm-kindlepw2-linux-gnueabi/meson-crosscompile.txt"
-        
-        # Use meson to build with the Kindle cross-compilation file
-        meson setup builddir --cross-file "$CROSS_FILE"
-        meson compile -C builddir
-        
-        # Copy and verify the binary
-        cp builddir/kindlestats_app .
-        file kindlestats_app
+        docker run --rm --platform linux/arm/v5 \
+          -v ${{ github.workspace }}:/workspace \
+          -w /workspace \
+          debian:bullseye bash -c "
+            apt-get update -y &&
+            apt-get install -y g++ libgtk2.0-dev pkg-config file &&
+            g++ main.cpp -o kindlestats_app \
+              \$(pkg-config --cflags --libs gtk+-2.0) \
+              -static-libstdc++ -pthread &&
+            file kindlestats_app &&
+            echo '=== Build successful! ==='
+          "
 
     - name: Upload Binary
       uses: actions/upload-artifact@v4
