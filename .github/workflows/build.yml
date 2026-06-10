@@ -20,6 +20,10 @@ jobs:
           -v ${{ github.workspace }}:/workspace \
           -w /workspace \
           arm32v5/debian:bullseye bash -c "
+            echo 'deb http://deb.debian.org/debian bullseye main' > /etc/apt/sources.list &&
+            echo 'deb http://deb.debian.org/debian-security bullseye-security main' >> /etc/apt/sources.list &&
+            echo 'deb http://deb.debian.org/debian bullseye-updates main' >> /etc/apt/sources.list &&
+            rm -rf /var/lib/apt/lists/* &&
             apt-get update -y &&
             apt-get install -y g++ libgtk2.0-dev pkg-config file &&
             g++ main.cpp -o kindlestats_app \
