@@ -7,16 +7,17 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
+    container: debian:bullseye
     steps:
     - uses: actions/checkout@v4
 
     - name: Set up Cross-Compilation Environment
       run: |
-        sudo dpkg --add-architecture armel
-        sudo apt-get update -y || true
-        # 安装适用于 ARM (soft-float) 的交叉编译器和 GTK2 开发库
-        sudo apt-get install -y gcc-arm-linux-gnueabi g++-arm-linux-gnueabi libgtk2.0-dev:armel pkg-config
+        dpkg --add-architecture armel
+        apt-get update -y || true
+        # 换用纯净的 Debian 容器以避免 Ubuntu 本机库的多架构冲突
+        apt-get install -y crossbuild-essential-armel libgtk2.0-dev:armel pkg-config file
 
     - name: Compile Application
       run: |
