@@ -1,0 +1,37 @@
+name: Build Kindle GTK App
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Cross-Compilation Environment
+      run: |
+        sudo dpkg --add-architecture armel
+        sudo apt-get update -y || true
+        # 安装适用于 ARM (soft-float) 的交叉编译器和 GTK2 开发库
+        sudo apt-get install -y gcc-arm-linux-gnueabi g++-arm-linux-gnueabi libgtk2.0-dev:armel pkg-config
+
+    - name: Compile Application
+      run: |
+        # 告诉 pkg-config 寻找 armel 架构的库文件，而不是宿主机 amd64 的库
+        export PKG_CONFIG_PATH=/usr/lib/arm-linux-gnueabi/pkgconfig:/usr/share/pkgconfig
+        export PKG_CONFIG_LIBDIR=/usr/lib/arm-linux-gnueabi/pkgconfig
+        
+        # 使用 g++-arm-linux-gnueabi 交叉编译
+        arm-linux-gnueabi-g++ main.cpp -o kindlestats_app $(pkg-config --cflags --libs gtk+-2.0)
+        
+        # 验证编译产物架构
+        file kindlestats_app
+
+    - name: Upload Binary
+      uses: actions/upload-artifact@v3
+      with:
+        name: kindlestats_app
+        path: kindlestats_app
