@@ -93,7 +93,7 @@ gboolean on_expose_hbar(GtkWidget *widget, GdkEventExpose *event, gpointer data)
     double start_y = 15.0;
     double row_h = (widget->allocation.height - start_y - 15.0) / 7.0;
 
-    cairo_set_font_size(cr, 18);
+    cairo_set_font_size(cr, 20);
     cairo_select_font_face(cr, "Sans", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
 
     for (int i = 0; i < 7; i++) {
