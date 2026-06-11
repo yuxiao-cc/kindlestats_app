@@ -9,7 +9,7 @@ void log_debug(const char* msg) {
     FILE *f = fopen("/mnt/us/kindlestats_debug.log", "a");
     if (!f) f = fopen("kindlestats_debug.log", "a");
     if (f) {
-        fprintf(f, "%s\\n", msg);
+        fprintf(f, "%s\n", msg);
         fclose(f);
     }
 }
@@ -26,8 +26,13 @@ GtkWidget* create_chart_card(const char* title, const char* subtitle, GtkWidget*
 
 
 void force_eink_refresh() {
-    log_debug("Calling eips -c..."); system("eips -c"); log_debug("Entering gtk_main...");
+    log_debug("Forcing e-ink full refresh...");
+    FILE *f = fopen("/sys/devices/platform/mxcfb.0/para_update", "w");
+    if (!f) f = fopen("/sys/class/graphics/fb0/force_refresh", "w");
+    if (f) { fprintf(f, "1"); fclose(f); }
+    else { system("eips -f"); }
     gtk_widget_queue_draw(main_window);
+    while (gtk_events_pending()) gtk_main_iteration();
 }
 
 GtkWidget* create_chart_card(const char* title, const char* subtitle, GtkWidget** content_area) {
@@ -611,7 +616,9 @@ int main(int argc, char *argv[]) {
     gtk_widget_hide(books_page);
     gtk_widget_hide(history_page);
     
-    log_debug("Calling eips -c..."); system("eips -c"); log_debug("Entering gtk_main..."); // Initial clear is fine now that we're explicitly triggering refresh on tab clicks
+    log_debug("Waiting for GTK to render...");
+    while (gtk_events_pending()) gtk_main_iteration();
+    log_debug("Entering gtk_main...");
     gtk_main();
     return 0;
 }
