@@ -10,7 +10,8 @@
 static int heatmap_mode = 0; // 0: 年度, 1: 月度
 static int goldhour_mode = 0; // 0: 雷达图, 1: 24小时柱状图
 
-// 控件引用
+// 全局控件引用
+static GtkWidget *main_window;
 static GtkWidget *heatmap_da;
 static GtkWidget *radar_da;
 static GtkWidget *bar24_da;
@@ -21,12 +22,14 @@ static GtkWidget *heatmap_btn_lbl;
 static void on_toggle_heatmap(GtkWidget *widget, gpointer data) {
     heatmap_mode = 1 - heatmap_mode;
     if (heatmap_mode == 0) {
-        gtk_label_set_markup(GTK_LABEL(heatmap_btn_lbl), "<span size='16000'>年度</span>");
+        gtk_label_set_markup(GTK_LABEL(heatmap_btn_lbl), "<span size='14000'>年度</span>");
     } else {
-        gtk_label_set_markup(GTK_LABEL(heatmap_btn_lbl), "<span size='16000'>月度</span>");
+        gtk_label_set_markup(GTK_LABEL(heatmap_btn_lbl), "<span size='14000'>月度</span>");
     }
-    gtk_widget_queue_draw(heatmap_da);
+    
+    // 强制全局刷新，解决局部残影和消失问题
     system("eips -c");
+    gtk_widget_queue_draw(main_window);
 }
 
 // 切换最爱阅读时段回调
@@ -35,13 +38,16 @@ static void on_toggle_goldhour(GtkWidget *widget, gpointer data) {
     if (goldhour_mode == 0) {
         gtk_widget_hide(bar24_da);
         gtk_widget_show(radar_da);
-        gtk_label_set_markup(GTK_LABEL(goldhour_btn_lbl), "<span size='16000'>雷达图</span>");
+        gtk_label_set_markup(GTK_LABEL(goldhour_btn_lbl), "<span size='14000'>雷达图</span>");
     } else {
         gtk_widget_hide(radar_da);
         gtk_widget_show(bar24_da);
-        gtk_label_set_markup(GTK_LABEL(goldhour_btn_lbl), "<span size='16000'>24h 柱状</span>");
+        gtk_label_set_markup(GTK_LABEL(goldhour_btn_lbl), "<span size='14000'>24h 柱状</span>");
     }
+    
+    // 强制全局刷新
     system("eips -c");
+    gtk_widget_queue_draw(main_window);
 }
 
 // 绘制热力图的回调函数
@@ -82,7 +88,7 @@ static gboolean on_expose_heatmap(GtkWidget *widget, GdkEventExpose *event, gpoi
         // 月度模拟
         cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);
         cairo_select_font_face(cr, "Sans", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
-        cairo_set_font_size(cr, 28.0);
+        cairo_set_font_size(cr, 24.0);
         cairo_move_to(cr, widget->allocation.width / 2.0 - 100, widget->allocation.height / 2.0);
         cairo_show_text(cr, "[ 月度热力图展示区 ]");
     }
@@ -147,7 +153,7 @@ static gboolean on_expose_radar(GtkWidget *widget, GdkEventExpose *event, gpoint
     
     const char* labels[] = {"0:00", "3:00", "6:00", "9:00", "12:00", "15:00", "18:00", "21:00"};
     cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);
-    cairo_set_font_size(cr, 20.0);
+    cairo_set_font_size(cr, 18.0); // 调小字号
     cairo_select_font_face(cr, "Sans", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
     for (int i = 0; i < 8; ++i) {
         double offset_r = r_max + 25.0;
@@ -184,7 +190,7 @@ static gboolean on_expose_bar24(GtkWidget *widget, GdkEventExpose *event, gpoint
     double mock_data[24] = {5, 2, 0, 0, 0, 0, 5, 15, 30, 20, 10, 15, 25, 40, 20, 10, 15, 25, 60, 80, 95, 85, 40, 15};
     double bar_w = (area_w - 23 * 2.0) / 24.0;
     
-    cairo_set_font_size(cr, 16.0);
+    cairo_set_font_size(cr, 14.0); // 调小字号
     cairo_select_font_face(cr, "Sans", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
     
     for (int i = 0; i < 24; ++i) {
@@ -222,7 +228,7 @@ static gboolean on_expose_hbar(GtkWidget *widget, GdkEventExpose *event, gpointe
     double start_y = 15.0;
     double row_h = (widget->allocation.height - start_y - 15.0) / 7.0;
     
-    cairo_set_font_size(cr, 20.0);
+    cairo_set_font_size(cr, 18.0); // 调小字号
     cairo_select_font_face(cr, "Sans", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
     
     for (int i = 0; i < 7; ++i) {
@@ -275,14 +281,14 @@ GtkWidget* create_chart_card(const char* title, const char* subtitle, const char
     GtkWidget *header_hbox = gtk_hbox_new(FALSE, 10);
     GtkWidget *title_vbox = gtk_vbox_new(FALSE, 2);
     char markup[256];
-    sprintf(markup, "<span size='26000' weight='bold'>%s</span>", title);
+    sprintf(markup, "<span size='22000' weight='bold'>%s</span>", title); // 减小字体
     GtkWidget *lbl_title = gtk_label_new(NULL);
     gtk_label_set_markup(GTK_LABEL(lbl_title), markup);
     gtk_misc_set_alignment(GTK_MISC(lbl_title), 0.0, 0.5);
     gtk_box_pack_start(GTK_BOX(title_vbox), lbl_title, FALSE, FALSE, 0);
     
     if (subtitle) {
-        sprintf(markup, "<span size='18000' foreground='#505050'>%s</span>", subtitle);
+        sprintf(markup, "<span size='14000'>%s</span>", subtitle); // 移除色彩属性以防解析失败
         GtkWidget *lbl_sub = gtk_label_new(NULL);
         gtk_label_set_markup(GTK_LABEL(lbl_sub), markup);
         gtk_misc_set_alignment(GTK_MISC(lbl_sub), 0.0, 0.5);
@@ -293,7 +299,7 @@ GtkWidget* create_chart_card(const char* title, const char* subtitle, const char
     if (btn_label) {
         GtkWidget *btn = gtk_button_new();
         *btn_lbl_ptr = gtk_label_new(NULL);
-        sprintf(markup, "<span size='16000'>%s</span>", btn_label);
+        sprintf(markup, "<span size='14000'>%s</span>", btn_label); // 减小字体
         gtk_label_set_markup(GTK_LABEL(*btn_lbl_ptr), markup);
         gtk_container_add(GTK_CONTAINER(btn), *btn_lbl_ptr);
         g_signal_connect(btn, "clicked", toggle_cb, NULL);
@@ -311,22 +317,22 @@ GtkWidget* create_chart_card(const char* title, const char* subtitle, const char
 int main(int argc, char *argv[]) {
     gtk_init(&argc, &argv);
 
-    GtkWidget *window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_title(GTK_WINDOW(window), "L:A_N:application_PC:N_ID:kindlestats");
-    gtk_window_fullscreen(GTK_WINDOW(window));
-    gtk_window_set_decorated(GTK_WINDOW(window), FALSE);
-    g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
+    main_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title(GTK_WINDOW(main_window), "L:A_N:application_PC:N_ID:kindlestats");
+    gtk_window_fullscreen(GTK_WINDOW(main_window));
+    gtk_window_set_decorated(GTK_WINDOW(main_window), FALSE);
+    g_signal_connect(main_window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
 
     GtkWidget *main_vbox = gtk_vbox_new(FALSE, 10);
     gtk_container_set_border_width(GTK_CONTAINER(main_vbox), 20);
-    gtk_container_add(GTK_CONTAINER(window), main_vbox);
+    gtk_container_add(GTK_CONTAINER(main_window), main_vbox);
 
     GtkWidget *header_hbox = gtk_hbox_new(FALSE, 0);
-    GtkWidget *title_label = gtk_label_new("<span size='20000' weight='bold'>KindleStats</span>");
+    GtkWidget *title_label = gtk_label_new("<span size='16000' weight='bold'>KindleStats</span>");
     gtk_label_set_use_markup(GTK_LABEL(title_label), TRUE);
     
     GtkWidget *exit_btn = gtk_button_new();
-    GtkWidget *exit_lbl = gtk_label_new("<span size='16000'>退出 [X]</span>");
+    GtkWidget *exit_lbl = gtk_label_new("<span size='14000'>退出 [X]</span>");
     gtk_label_set_use_markup(GTK_LABEL(exit_lbl), TRUE);
     gtk_container_add(GTK_CONTAINER(exit_btn), exit_lbl);
     g_signal_connect(exit_btn, "clicked", G_CALLBACK(gtk_main_quit), NULL);
@@ -337,17 +343,17 @@ int main(int argc, char *argv[]) {
 
     GtkWidget *tab_hbox = gtk_hbox_new(TRUE, 8);
     GtkWidget *tab1 = gtk_button_new();
-    GtkWidget *lbl1 = gtk_label_new("<span size='20000' weight='bold'>数据概览</span>");
+    GtkWidget *lbl1 = gtk_label_new("<span size='16000' weight='bold'>数据概览</span>");
     gtk_label_set_use_markup(GTK_LABEL(lbl1), TRUE);
     gtk_container_add(GTK_CONTAINER(tab1), lbl1);
     
     GtkWidget *tab2 = gtk_button_new();
-    GtkWidget *lbl2 = gtk_label_new("<span size='20000'>我的书籍</span>");
+    GtkWidget *lbl2 = gtk_label_new("<span size='16000'>我的书籍</span>");
     gtk_label_set_use_markup(GTK_LABEL(lbl2), TRUE);
     gtk_container_add(GTK_CONTAINER(tab2), lbl2);
     
     GtkWidget *tab3 = gtk_button_new();
-    GtkWidget *lbl3 = gtk_label_new("<span size='20000'>今日阅读</span>");
+    GtkWidget *lbl3 = gtk_label_new("<span size='16000'>今日阅读</span>");
     gtk_label_set_use_markup(GTK_LABEL(lbl3), TRUE);
     gtk_container_add(GTK_CONTAINER(tab3), lbl3);
     
@@ -376,13 +382,21 @@ int main(int argc, char *argv[]) {
         GtkWidget *vbox = gtk_vbox_new(FALSE, 2);
         gtk_container_set_border_width(GTK_CONTAINER(vbox), 12);
         
-        char markup[256];
-        sprintf(markup, "<span size='36000' weight='bold'>%s</span>\n<span size='20000' foreground='#505050'>%s</span>", stat_vals[i], stat_lbls[i]);
-        GtkWidget *lbl = gtk_label_new(NULL);
-        gtk_label_set_use_markup(GTK_LABEL(lbl), TRUE);
-        gtk_label_set_justify(GTK_LABEL(lbl), GTK_JUSTIFY_CENTER);
+        // 修复信息空白：将多行文本拆分为两个独立的标签，避免使用过于复杂的 Pango markup
+        char m_val[128];
+        sprintf(m_val, "<span size='28000' weight='bold'>%s</span>", stat_vals[i]);
+        GtkWidget *lbl_val = gtk_label_new(NULL);
+        gtk_label_set_markup(GTK_LABEL(lbl_val), m_val);
+        gtk_misc_set_alignment(GTK_MISC(lbl_val), 0.5, 0.5);
+        gtk_box_pack_start(GTK_BOX(vbox), lbl_val, TRUE, TRUE, 0);
+
+        char m_sub[128];
+        sprintf(m_sub, "<span size='14000'>%s</span>", stat_lbls[i]);
+        GtkWidget *lbl_sub = gtk_label_new(NULL);
+        gtk_label_set_markup(GTK_LABEL(lbl_sub), m_sub);
+        gtk_misc_set_alignment(GTK_MISC(lbl_sub), 0.5, 0.5);
+        gtk_box_pack_start(GTK_BOX(vbox), lbl_sub, TRUE, TRUE, 0);
         
-        gtk_box_pack_start(GTK_BOX(vbox), lbl, TRUE, TRUE, 0);
         gtk_container_add(GTK_CONTAINER(frame), vbox);
         gtk_box_pack_start(GTK_BOX(stats_hbox), event_box, TRUE, TRUE, 0);
     }
@@ -390,7 +404,7 @@ int main(int argc, char *argv[]) {
 
     // 热力图模块
     GtkWidget *heat_content;
-    GtkWidget *heat_card = create_chart_card("2026年阅读热力图", NULL, "年度", &heat_content, &heatmap_btn_lbl, G_CALLBACK(on_toggle_heatmap));
+    GtkWidget *heat_card = create_chart_card("年度阅读热力图", NULL, "年度", &heat_content, &heatmap_btn_lbl, G_CALLBACK(on_toggle_heatmap));
     heatmap_da = gtk_drawing_area_new();
     gtk_widget_set_size_request(heatmap_da, -1, 160); 
     g_signal_connect(heatmap_da, "expose-event", G_CALLBACK(on_expose_heatmap), NULL);
@@ -424,9 +438,9 @@ int main(int argc, char *argv[]) {
 
     GdkColor bg_color;
     gdk_color_parse("#f5f4ef", &bg_color);
-    gtk_widget_modify_bg(window, GTK_STATE_NORMAL, &bg_color);
+    gtk_widget_modify_bg(main_window, GTK_STATE_NORMAL, &bg_color);
 
-    gtk_widget_show_all(window);
+    gtk_widget_show_all(main_window);
     
     // 隐藏 24h 柱状图
     if (goldhour_mode == 0) gtk_widget_hide(bar24_da);
