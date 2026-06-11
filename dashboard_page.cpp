@@ -249,8 +249,8 @@ GtkWidget* create_dashboard_page() {
     gdk_color_parse("#ffffff", &ebg);
     gtk_widget_modify_bg(yr_eb, GTK_STATE_NORMAL, &ebg);
 
-    // Use larger spacing (10) so buttons are far from the label
-    GtkWidget *yr_hbox = gtk_hbox_new(FALSE, 10);
+    // Use large spacing (20) so buttons are clearly separated from the label
+    GtkWidget *yr_hbox = gtk_hbox_new(FALSE, 20);
     GtkWidget *yr_prev = gtk_button_new();
     GtkWidget *yr_prev_lbl = gtk_label_new(NULL);
     gtk_label_set_markup(GTK_LABEL(yr_prev_lbl), "<span size='10000'>&lt;</span>");
@@ -258,11 +258,11 @@ GtkWidget* create_dashboard_page() {
     g_signal_connect(yr_prev, "clicked", G_CALLBACK(on_heat_year_prev), NULL);
     gtk_box_pack_start(GTK_BOX(yr_hbox), yr_prev, FALSE, FALSE, 0);
 
-    // Wider year label with extra padding around it
+    // Much wider year label with extra padding
     g_heat_year_lbl = gtk_label_new(NULL);
-    gtk_widget_set_size_request(g_heat_year_lbl, 140, -1);
+    gtk_widget_set_size_request(g_heat_year_lbl, 180, -1);
     gtk_misc_set_alignment(GTK_MISC(g_heat_year_lbl), 0.5, 0.5);
-    gtk_misc_set_padding(GTK_MISC(g_heat_year_lbl), 6, 0);
+    gtk_misc_set_padding(GTK_MISC(g_heat_year_lbl), 10, 0);
     gtk_box_pack_start(GTK_BOX(yr_hbox), g_heat_year_lbl, FALSE, FALSE, 0);
 
     GtkWidget *yr_next = gtk_button_new();
@@ -283,7 +283,7 @@ GtkWidget* create_dashboard_page() {
     GtkWidget *mo_eb = gtk_event_box_new();
     gtk_widget_modify_bg(mo_eb, GTK_STATE_NORMAL, &ebg);
 
-    GtkWidget *mo_hbox = gtk_hbox_new(FALSE, 10);
+    GtkWidget *mo_hbox = gtk_hbox_new(FALSE, 20);
     GtkWidget *mo_prev = gtk_button_new();
     GtkWidget *mo_prev_lbl = gtk_label_new(NULL);
     gtk_label_set_markup(GTK_LABEL(mo_prev_lbl), "<span size='10000'>&lt;</span>");
@@ -291,11 +291,11 @@ GtkWidget* create_dashboard_page() {
     g_signal_connect(mo_prev, "clicked", G_CALLBACK(on_heat_month_prev), NULL);
     gtk_box_pack_start(GTK_BOX(mo_hbox), mo_prev, FALSE, FALSE, 0);
 
-    // Wider month label with extra padding
+    // Much wider month label with extra padding
     g_heat_month_lbl = gtk_label_new(NULL);
-    gtk_widget_set_size_request(g_heat_month_lbl, 100, -1);
+    gtk_widget_set_size_request(g_heat_month_lbl, 120, -1);
     gtk_misc_set_alignment(GTK_MISC(g_heat_month_lbl), 0.5, 0.5);
-    gtk_misc_set_padding(GTK_MISC(g_heat_month_lbl), 6, 0);
+    gtk_misc_set_padding(GTK_MISC(g_heat_month_lbl), 10, 0);
     gtk_box_pack_start(GTK_BOX(mo_hbox), g_heat_month_lbl, FALSE, FALSE, 0);
 
     GtkWidget *mo_next = gtk_button_new();
