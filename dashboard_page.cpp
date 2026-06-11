@@ -235,71 +235,75 @@ GtkWidget* create_dashboard_page() {
     gtk_container_set_border_width(GTK_CONTAINER(heat_vbox), 8);
     gtk_container_add(GTK_CONTAINER(heat_frame), heat_vbox);
 
-    // Title (full width row)
+    // Title row: title (left, expandable) + year/month controls (right, same row)
+    GtkWidget *heat_hdr = gtk_hbox_new(FALSE, 6);
+
     GtkWidget *heat_title_lbl = gtk_label_new(NULL);
     gtk_label_set_markup(GTK_LABEL(heat_title_lbl), "<span size='12000' weight='bold'>阅读热力图</span>");
     gtk_misc_set_alignment(GTK_MISC(heat_title_lbl), 0.0, 0.5);
-    gtk_box_pack_start(GTK_BOX(heat_vbox), heat_title_lbl, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(heat_hdr), heat_title_lbl, TRUE, TRUE, 0);
 
-    // Year/Month controls (own row, bigger and clearer)
-    GtkWidget *ctrl_hbox = gtk_hbox_new(FALSE, 8);
-    gtk_misc_set_alignment(GTK_MISC(ctrl_hbox), 0.0, 0.5);
-
-    // Year group with own EventBox
+    // Year group with own EventBox (smaller buttons, wider label)
     GtkWidget *yr_eb = gtk_event_box_new();
-    gtk_widget_modify_bg(yr_eb, GTK_STATE_NORMAL, &white);
+    GdkColor ebg;
+    gdk_color_parse("#ffffff", &ebg);
+    gtk_widget_modify_bg(yr_eb, GTK_STATE_NORMAL, &ebg);
+
     GtkWidget *yr_hbox = gtk_hbox_new(FALSE, 0);
     GtkWidget *yr_prev = gtk_button_new();
     GtkWidget *yr_prev_lbl = gtk_label_new(NULL);
-    gtk_label_set_markup(GTK_LABEL(yr_prev_lbl), "<span size='14000'>&lt;&lt;</span>");
+    gtk_label_set_markup(GTK_LABEL(yr_prev_lbl), "<span size='10000'>&lt;</span>");
     gtk_container_add(GTK_CONTAINER(yr_prev), yr_prev_lbl);
     g_signal_connect(yr_prev, "clicked", G_CALLBACK(on_heat_year_prev), NULL);
     gtk_box_pack_start(GTK_BOX(yr_hbox), yr_prev, FALSE, FALSE, 0);
 
     g_heat_year_lbl = gtk_label_new(NULL);
-    gtk_widget_set_size_request(g_heat_year_lbl, 130, -1);
+    gtk_widget_set_size_request(g_heat_year_lbl, 120, -1);
     gtk_misc_set_alignment(GTK_MISC(g_heat_year_lbl), 0.5, 0.5);
     gtk_box_pack_start(GTK_BOX(yr_hbox), g_heat_year_lbl, FALSE, FALSE, 0);
 
     GtkWidget *yr_next = gtk_button_new();
     GtkWidget *yr_next_lbl = gtk_label_new(NULL);
-    gtk_label_set_markup(GTK_LABEL(yr_next_lbl), "<span size='14000'>&gt;&gt;</span>");
+    gtk_label_set_markup(GTK_LABEL(yr_next_lbl), "<span size='10000'>&gt;</span>");
     gtk_container_add(GTK_CONTAINER(yr_next), yr_next_lbl);
     g_signal_connect(yr_next, "clicked", G_CALLBACK(on_heat_year_next), NULL);
     gtk_box_pack_start(GTK_BOX(yr_hbox), yr_next, FALSE, FALSE, 0);
+
     gtk_container_add(GTK_CONTAINER(yr_eb), yr_hbox);
-    gtk_box_pack_start(GTK_BOX(ctrl_hbox), yr_eb, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(heat_hdr), yr_eb, FALSE, FALSE, 0);
 
     // Spacer
-    GtkWidget *sp = gtk_label_new("    ");
-    gtk_box_pack_start(GTK_BOX(ctrl_hbox), sp, FALSE, FALSE, 0);
+    GtkWidget *sp = gtk_label_new("  ");
+    gtk_box_pack_start(GTK_BOX(heat_hdr), sp, FALSE, FALSE, 0);
 
     // Month group
     GtkWidget *mo_eb = gtk_event_box_new();
-    gtk_widget_modify_bg(mo_eb, GTK_STATE_NORMAL, &white);
+    gtk_widget_modify_bg(mo_eb, GTK_STATE_NORMAL, &ebg);
+
     GtkWidget *mo_hbox = gtk_hbox_new(FALSE, 0);
     GtkWidget *mo_prev = gtk_button_new();
     GtkWidget *mo_prev_lbl = gtk_label_new(NULL);
-    gtk_label_set_markup(GTK_LABEL(mo_prev_lbl), "<span size='14000'>&lt;&lt;</span>");
+    gtk_label_set_markup(GTK_LABEL(mo_prev_lbl), "<span size='10000'>&lt;</span>");
     gtk_container_add(GTK_CONTAINER(mo_prev), mo_prev_lbl);
     g_signal_connect(mo_prev, "clicked", G_CALLBACK(on_heat_month_prev), NULL);
     gtk_box_pack_start(GTK_BOX(mo_hbox), mo_prev, FALSE, FALSE, 0);
 
     g_heat_month_lbl = gtk_label_new(NULL);
-    gtk_widget_set_size_request(g_heat_month_lbl, 90, -1);
+    gtk_widget_set_size_request(g_heat_month_lbl, 80, -1);
     gtk_misc_set_alignment(GTK_MISC(g_heat_month_lbl), 0.5, 0.5);
     gtk_box_pack_start(GTK_BOX(mo_hbox), g_heat_month_lbl, FALSE, FALSE, 0);
 
     GtkWidget *mo_next = gtk_button_new();
     GtkWidget *mo_next_lbl = gtk_label_new(NULL);
-    gtk_label_set_markup(GTK_LABEL(mo_next_lbl), "<span size='14000'>&gt;&gt;</span>");
+    gtk_label_set_markup(GTK_LABEL(mo_next_lbl), "<span size='10000'>&gt;</span>");
     gtk_container_add(GTK_CONTAINER(mo_next), mo_next_lbl);
     g_signal_connect(mo_next, "clicked", G_CALLBACK(on_heat_month_next), NULL);
     gtk_box_pack_start(GTK_BOX(mo_hbox), mo_next, FALSE, FALSE, 0);
-    gtk_container_add(GTK_CONTAINER(mo_eb), mo_hbox);
-    gtk_box_pack_start(GTK_BOX(ctrl_hbox), mo_eb, FALSE, FALSE, 0);
 
-    gtk_box_pack_start(GTK_BOX(heat_vbox), ctrl_hbox, FALSE, FALSE, 0);
+    gtk_container_add(GTK_CONTAINER(mo_eb), mo_hbox);
+    gtk_box_pack_start(GTK_BOX(heat_hdr), mo_eb, FALSE, FALSE, 0);
+
+    gtk_box_pack_start(GTK_BOX(heat_vbox), heat_hdr, FALSE, FALSE, 0);
 
     // Content: left chart, right 2x2 stats grid
     GtkWidget *heat_content = gtk_hbox_new(FALSE, 14);
