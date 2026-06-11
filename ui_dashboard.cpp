@@ -96,7 +96,7 @@ static void show_monthly_dialog(int month) {
     gtk_container_add(GTK_CONTAINER(frame), main_vbox);
     
     // Title
-    char title_buf[64];
+    char title_buf[128];
     sprintf(title_buf, "<span size='16000' weight='bold'>2026年 %d月 阅读概况</span>", month);
     GtkWidget *title_lbl = gtk_label_new(NULL);
     gtk_label_set_markup(GTK_LABEL(title_lbl), title_buf);
@@ -345,7 +345,7 @@ GtkWidget* create_dashboard_page() {
         GdkColor white; gdk_color_parse("#ffffff", &white);
         gtk_widget_modify_bg(evt_box, GTK_STATE_NORMAL, &white);
         
-        char lbl_buf[32];
+        char lbl_buf[128];
         sprintf(lbl_buf, "<span size='11000' underline='single'>%d月</span>", i);
         GtkWidget *lbl = gtk_label_new(NULL);
         gtk_label_set_markup(GTK_LABEL(lbl), lbl_buf);
