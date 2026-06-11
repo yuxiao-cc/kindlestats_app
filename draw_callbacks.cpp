@@ -114,7 +114,7 @@ gboolean on_expose_hbar(GtkWidget *widget, GdkEventExpose *event, gpointer data)
         cairo_stroke(cr);
 
         char vs[16];
-        sprintf(vs, "%.0fm", vals[i]);
+        sprintf(vs, "%.0fmin", vals[i]);
         cairo_text_extents_t ext;
         cairo_text_extents(cr, vs, &ext);
         cairo_move_to(cr, tx + tw + 10, y + row_h/2.0 + 9.0);
