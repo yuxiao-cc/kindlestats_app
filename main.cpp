@@ -9,8 +9,7 @@ void log_debug(const char* msg) {
     FILE *f = fopen("/mnt/us/kindlestats_debug.log", "a");
     if (!f) f = fopen("kindlestats_debug.log", "a");
     if (f) {
-        fprintf(f, "%s
-", msg);
+        fprintf(f, "%s\\n", msg);
         fclose(f);
     }
 }
@@ -331,7 +330,6 @@ GtkWidget* create_books_page() {
 
 static gboolean on_expose_heatmap(GtkWidget *widget, GdkEventExpose *event, gpointer data) {
     log_debug("on_expose_heatmap called");
-    cairo_t *cr = gdk_cairo_create(widget->window);(GtkWidget *widget, GdkEventExpose *event, gpointer data) {
     cairo_t *cr = gdk_cairo_create(widget->window);
     cairo_set_source_rgb(cr, 1.0, 1.0, 1.0);
     cairo_paint(cr);
