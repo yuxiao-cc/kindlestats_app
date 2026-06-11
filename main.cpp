@@ -7,7 +7,7 @@
 static GtkWidget* make_tab_label(const char* text) {
     GtkWidget *lbl = gtk_label_new(NULL);
     char m[128];
-    sprintf(m, "<span size='17000' weight='bold'>%s</span>", text);
+    sprintf(m, "<span size='13000' weight='bold'>%s</span>", text);
     gtk_label_set_markup(GTK_LABEL(lbl), m);
     return lbl;
 }
@@ -35,15 +35,15 @@ int main(int argc, char *argv[]) {
 
     // Header bar
     GtkWidget *header = gtk_hbox_new(FALSE, 8);
-    gtk_container_set_border_width(GTK_CONTAINER(header), 12);
+    gtk_container_set_border_width(GTK_CONTAINER(header), 8);
     GtkWidget *title_lbl = gtk_label_new(NULL);
-    gtk_label_set_markup(GTK_LABEL(title_lbl), "<span size='20000' weight='bold'>KindleStats</span>");
+    gtk_label_set_markup(GTK_LABEL(title_lbl), "<span size='17000' weight='bold'>KindleStats</span>");
     gtk_misc_set_alignment(GTK_MISC(title_lbl), 0.0, 0.5);
     gtk_box_pack_start(GTK_BOX(header), title_lbl, TRUE, TRUE, 0);
 
     GtkWidget *exit_btn = gtk_button_new();
     GtkWidget *exit_lbl = gtk_label_new(NULL);
-    gtk_label_set_markup(GTK_LABEL(exit_lbl), "<span size='14000'>退出 [X]</span>");
+    gtk_label_set_markup(GTK_LABEL(exit_lbl), "<span size='10000'>退出 [X]</span>");
     gtk_container_add(GTK_CONTAINER(exit_btn), exit_lbl);
     g_signal_connect(exit_btn, "clicked", G_CALLBACK(gtk_main_quit), NULL);
     gtk_box_pack_end(GTK_BOX(header), exit_btn, FALSE, FALSE, 0);

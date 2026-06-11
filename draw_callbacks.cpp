@@ -58,7 +58,7 @@ gboolean on_expose_bar24(GtkWidget *widget, GdkEventExpose *event, gpointer data
     double mock_data[24] = {5,2,0,0,0,0,5,15,30,20,10,15,25,40,20,10,15,25,60,80,95,85,40,15};
     double bar_w = (area_w - 23 * 2.0) / 24.0;
 
-    cairo_set_font_size(cr, 13);
+    cairo_set_font_size(cr, 16);
     cairo_select_font_face(cr, "Sans", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
 
     for (int i = 0; i < 24; i++) {
