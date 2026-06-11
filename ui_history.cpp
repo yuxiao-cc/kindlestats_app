@@ -1,6 +1,7 @@
 #include "ui_history.h"
 #include "utils.h"
 #include <cairo.h>
+#include <stdio.h>
 
 static gboolean on_expose_timeline(GtkWidget *widget, GdkEventExpose *event, gpointer data) {
     cairo_t *cr = gdk_cairo_create(widget->window);

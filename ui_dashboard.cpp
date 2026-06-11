@@ -65,7 +65,8 @@ static gboolean on_expose_monthly_heatmap(GtkWidget *widget, GdkEventExpose *eve
     return FALSE;
 }
 
-static void on_modal_close(GtkWidget *widget, GtkWidget *dialog) {
+static void on_modal_close(GtkWidget *widget, gpointer data) {
+    GtkWidget *dialog = GTK_WIDGET(data);
     gtk_widget_destroy(dialog);
     force_eink_refresh();
 }

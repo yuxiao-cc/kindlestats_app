@@ -1,6 +1,11 @@
 #include "ui_books.h"
 #include <cairo.h>
 #include <stdio.h>
+#include <stdlib.h>
+
+static void destroy_double_ptr(gpointer data, GClosure *closure) {
+    g_free(data);
+}
 
 // Draw the book cover outline
 static gboolean on_expose_book_cover(GtkWidget *widget, GdkEventExpose *event, gpointer data) {
@@ -90,9 +95,9 @@ GtkWidget* create_book_item(const char* title, const char* author, const char* t
     
     GtkWidget *prog_da = gtk_drawing_area_new();
     gtk_widget_set_size_request(prog_da, 200, 8); // Thin progress bar
-    double *p_val = (double*)malloc(sizeof(double));
+    double *p_val = g_new(double, 1);
     *p_val = progress;
-    g_signal_connect_data(prog_da, "expose-event", G_CALLBACK(on_expose_progress_bar), p_val, (GClosureNotify)free, 0);
+    g_signal_connect_data(prog_da, "expose-event", G_CALLBACK(on_expose_progress_bar), p_val, (GClosureNotify)destroy_double_ptr, (GConnectFlags)0);
     gtk_box_pack_start(GTK_BOX(prog_hbox), prog_da, FALSE, FALSE, 0);
     
     sprintf(markup, "<span size='11000' weight='bold'>%d%%</span>", (int)(progress * 100));
