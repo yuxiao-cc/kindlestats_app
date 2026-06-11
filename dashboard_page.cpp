@@ -6,7 +6,6 @@
 
 // ==================== Global state for heatmap ====================
 static GtkWidget *g_heat_drawing_area;
-static GtkWidget *g_heat_stats_label;
 static GtkWidget *g_heat_year_lbl;
 static GtkWidget *g_heat_month_lbl;
 static int g_heat_year = 2026;
@@ -32,42 +31,21 @@ static int get_avg_daily_min() {
     return days > 0 ? total / days : 0;
 }
 
-static void refresh_heat_stats() {
-    if (!g_heat_stats_label) return;
-    char m[768];
-    int total = get_total_reading_minutes();
-    int active = get_active_days();
-    int streak = get_max_streak();
-    int avg = get_avg_daily_min();
-    sprintf(m,
-        "<span size='9500' color='#505050'>累计阅读</span>\n"
-        "<span size='12000' weight='bold'>%.1f 小时</span>\n"
-        "<span size='9500' color='#505050'>活跃天数</span>\n"
-        "<span size='12000' weight='bold'>%d 天</span>\n"
-        "<span size='9500' color='#505050'>最长连读</span>\n"
-        "<span size='12000' weight='bold'>%d 天</span>\n"
-        "<span size='9500' color='#505050'>日均阅读</span>\n"
-        "<span size='12000' weight='bold'>%d 分钟</span>",
-        total / 60.0, active, streak, avg);
-    gtk_label_set_markup(GTK_LABEL(g_heat_stats_label), m);
-}
-
 static void refresh_heat_date_labels() {
     if (g_heat_year_lbl) {
         char m[64];
-        sprintf(m, "<span size='11000' weight='bold'>%d年</span>", g_heat_year);
+        sprintf(m, "<span size='14000' weight='bold'>%d年</span>", g_heat_year);
         gtk_label_set_markup(GTK_LABEL(g_heat_year_lbl), m);
     }
     if (g_heat_month_lbl) {
         char m[64];
-        sprintf(m, "<span size='11000' weight='bold'>%d月</span>", g_heat_month);
+        sprintf(m, "<span size='14000' weight='bold'>%d月</span>", g_heat_month);
         gtk_label_set_markup(GTK_LABEL(g_heat_month_lbl), m);
     }
 }
 
 static void refresh_heat_canvas() {
     refresh_heat_date_labels();
-    refresh_heat_stats();
     if (g_heat_drawing_area) gtk_widget_queue_draw(g_heat_drawing_area);
 }
 
@@ -84,7 +62,6 @@ static gboolean on_expose_heatmap_monthly(GtkWidget *widget, GdkEventExpose *eve
     int fw = first_weekday_of_month(g_heat_year, g_heat_month);
     int dm = days_in_month(g_heat_year, g_heat_month);
 
-    // Tighter horizontal padding to give cells more room
     double pad_x = 4.0, pad_y = 4.0;
     double header_h = 28.0;
     double cw = (w - pad_x * 2) / 7.0;
@@ -92,7 +69,7 @@ static gboolean on_expose_heatmap_monthly(GtkWidget *widget, GdkEventExpose *eve
     if (cw < 8) cw = 8;
     if (ch < 8) ch = 8;
 
-    // Weekday headers - larger font
+    // Weekday headers
     const char* dh[] = {"一","二","三","四","五","六","日"};
     cairo_set_font_size(cr, 20);
     cairo_select_font_face(cr, "Sans", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
@@ -111,7 +88,7 @@ static gboolean on_expose_heatmap_monthly(GtkWidget *widget, GdkEventExpose *eve
     cairo_line_to(cr, w - pad_x, pad_y + header_h - 4);
     cairo_stroke(cr);
 
-    // Day cells (no day numbers, just heat color)
+    // Day cells
     int row = 0, col = fw;
     for (int day = 1; day <= dm; day++) {
         double x = pad_x + col * cw;
@@ -166,50 +143,37 @@ static void on_heat_month_next(GtkButton *b, gpointer d) {
     refresh_heat_canvas();
 }
 
-// ==================== Create a chart card (compact fonts) ====================
+// ==================== Create a stat cell (used in 2x2 grid) ====================
 
-static GtkWidget* create_chart_card_compact(const char* title, const char* subtitle,
-                                            GtkWidget** content_area) {
-    GtkWidget *event_box = gtk_event_box_new();
+static GtkWidget* create_stat_cell(const char* label, const char* value) {
+    // Wrap in EventBox for e-ink damage tracking
+    GtkWidget *eb = gtk_event_box_new();
     GdkColor white;
     gdk_color_parse("#ffffff", &white);
-    gtk_widget_modify_bg(event_box, GTK_STATE_NORMAL, &white);
+    gtk_widget_modify_bg(eb, GTK_STATE_NORMAL, &white);
 
-    GtkWidget *frame = gtk_frame_new(NULL);
-    gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_OUT);
-    gtk_container_add(GTK_CONTAINER(event_box), frame);
+    GtkWidget *vbox = gtk_vbox_new(TRUE, 2);
+    gtk_container_set_border_width(GTK_CONTAINER(vbox), 4);
+    gtk_container_add(GTK_CONTAINER(eb), vbox);
 
-    GtkWidget *vbox = gtk_vbox_new(FALSE, 4);
-    gtk_container_set_border_width(GTK_CONTAINER(vbox), 8);
-    gtk_container_add(GTK_CONTAINER(frame), vbox);
+    char ml[128], mv[128];
+    sprintf(ml, "<span size='10000' color='#505050'>%s</span>", label);
+    sprintf(mv, "<span size='14000' weight='bold'>%s</span>", value);
 
-    GtkWidget *header_hbox = gtk_hbox_new(FALSE, 8);
-    GtkWidget *title_vbox = gtk_vbox_new(FALSE, 1);
-    char markup[256];
+    GtkWidget *lbl = gtk_label_new(NULL);
+    gtk_label_set_markup(GTK_LABEL(lbl), ml);
+    gtk_misc_set_alignment(GTK_MISC(lbl), 0.5, 0.5);
+    gtk_box_pack_start(GTK_BOX(vbox), lbl, TRUE, TRUE, 0);
 
-    sprintf(markup, "<span size='13000' weight='bold'>%s</span>", title);
-    GtkWidget *lbl_title = gtk_label_new(NULL);
-    gtk_label_set_markup(GTK_LABEL(lbl_title), markup);
-    gtk_misc_set_alignment(GTK_MISC(lbl_title), 0.0, 0.5);
-    gtk_box_pack_start(GTK_BOX(title_vbox), lbl_title, FALSE, FALSE, 0);
+    GtkWidget *val = gtk_label_new(NULL);
+    gtk_label_set_markup(GTK_LABEL(val), mv);
+    gtk_misc_set_alignment(GTK_MISC(val), 0.5, 0.5);
+    gtk_box_pack_start(GTK_BOX(vbox), val, TRUE, TRUE, 0);
 
-    if (subtitle) {
-        sprintf(markup, "<span size='10000'>%s</span>", subtitle);
-        GtkWidget *lbl_sub = gtk_label_new(NULL);
-        gtk_label_set_markup(GTK_LABEL(lbl_sub), markup);
-        gtk_misc_set_alignment(GTK_MISC(lbl_sub), 0.0, 0.5);
-        gtk_box_pack_start(GTK_BOX(title_vbox), lbl_sub, FALSE, FALSE, 0);
-    }
-    gtk_box_pack_start(GTK_BOX(header_hbox), title_vbox, TRUE, TRUE, 0);
-    gtk_box_pack_start(GTK_BOX(vbox), header_hbox, FALSE, FALSE, 0);
-
-    *content_area = gtk_vbox_new(FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(vbox), *content_area, TRUE, TRUE, 0);
-
-    return event_box;
+    return eb;
 }
 
-// ==================== Create a stat card (smaller fonts) ====================
+// ==================== Create a top stat card (128.5h / 24本 / 46min) ====================
 
 static GtkWidget* create_stat_card(const char* val, const char* lbl) {
     GtkWidget *event_box = gtk_event_box_new();
@@ -222,7 +186,7 @@ static GtkWidget* create_stat_card(const char* val, const char* lbl) {
     gtk_container_add(GTK_CONTAINER(event_box), frame);
 
     GtkWidget *vbox = gtk_vbox_new(FALSE, 1);
-    gtk_container_set_border_width(GTK_CONTAINER(vbox), 8);
+    gtk_container_set_border_width(GTK_CONTAINER(vbox), 6);
     gtk_container_add(GTK_CONTAINER(frame), vbox);
 
     char m_val[128];
@@ -245,11 +209,11 @@ static GtkWidget* create_stat_card(const char* val, const char* lbl) {
 // ==================== Build dashboard page ====================
 
 GtkWidget* create_dashboard_page() {
-    GtkWidget *vbox = gtk_vbox_new(FALSE, 4);
+    GtkWidget *vbox = gtk_vbox_new(FALSE, 5);
     gtk_container_set_border_width(GTK_CONTAINER(vbox), 6);
 
-    // ===== 3 stat cards =====
-    GtkWidget *stats_hbox = gtk_hbox_new(TRUE, 4);
+    // ===== 3 top stat cards =====
+    GtkWidget *stats_hbox = gtk_hbox_new(TRUE, 5);
     const char* stat_vals[] = {"128.5 h", "24 本", "46 min"};
     const char* stat_lbls[] = {"累计阅读", "已读书籍", "日均阅读"};
     for (int i = 0; i < 3; i++) {
@@ -257,7 +221,7 @@ GtkWidget* create_dashboard_page() {
     }
     gtk_box_pack_start(GTK_BOX(vbox), stats_hbox, FALSE, FALSE, 0);
 
-    // ===== Heatmap card: [title on left, year/month controls on right] =====
+    // ===== Heatmap card: left chart, right 2x2 stats =====
     GtkWidget *heat_eb = gtk_event_box_new();
     GdkColor white;
     gdk_color_parse("#ffffff", &white);
@@ -267,102 +231,112 @@ GtkWidget* create_dashboard_page() {
     gtk_frame_set_shadow_type(GTK_FRAME(heat_frame), GTK_SHADOW_OUT);
     gtk_container_add(GTK_CONTAINER(heat_eb), heat_frame);
 
-    GtkWidget *heat_vbox = gtk_vbox_new(FALSE, 3);
-    gtk_container_set_border_width(GTK_CONTAINER(heat_vbox), 6);
+    GtkWidget *heat_vbox = gtk_vbox_new(FALSE, 4);
+    gtk_container_set_border_width(GTK_CONTAINER(heat_vbox), 8);
     gtk_container_add(GTK_CONTAINER(heat_frame), heat_vbox);
 
-    // Header row: title (left, expandable) + year/month controls (right)
-    GtkWidget *heat_hdr = gtk_hbox_new(FALSE, 3);
-
+    // Title (full width row)
     GtkWidget *heat_title_lbl = gtk_label_new(NULL);
     gtk_label_set_markup(GTK_LABEL(heat_title_lbl), "<span size='12000' weight='bold'>阅读热力图</span>");
     gtk_misc_set_alignment(GTK_MISC(heat_title_lbl), 0.0, 0.5);
-    gtk_box_pack_start(GTK_BOX(heat_hdr), heat_title_lbl, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(heat_vbox), heat_title_lbl, FALSE, FALSE, 0);
 
-    // Year group: wrap in EventBox for e-ink + fixed-width label to prevent overlap
+    // Year/Month controls (own row, bigger and clearer)
+    GtkWidget *ctrl_hbox = gtk_hbox_new(FALSE, 8);
+    gtk_misc_set_alignment(GTK_MISC(ctrl_hbox), 0.0, 0.5);
+
+    // Year group with own EventBox
     GtkWidget *yr_eb = gtk_event_box_new();
-    GdkColor ebg;
-    gdk_color_parse("#ffffff", &ebg);
-    gtk_widget_modify_bg(yr_eb, GTK_STATE_NORMAL, &ebg);
-
+    gtk_widget_modify_bg(yr_eb, GTK_STATE_NORMAL, &white);
     GtkWidget *yr_hbox = gtk_hbox_new(FALSE, 0);
     GtkWidget *yr_prev = gtk_button_new();
     GtkWidget *yr_prev_lbl = gtk_label_new(NULL);
-    gtk_label_set_markup(GTK_LABEL(yr_prev_lbl), "<span size='11000'>&lt;&lt;</span>");
+    gtk_label_set_markup(GTK_LABEL(yr_prev_lbl), "<span size='14000'>&lt;&lt;</span>");
     gtk_container_add(GTK_CONTAINER(yr_prev), yr_prev_lbl);
     g_signal_connect(yr_prev, "clicked", G_CALLBACK(on_heat_year_prev), NULL);
     gtk_box_pack_start(GTK_BOX(yr_hbox), yr_prev, FALSE, FALSE, 0);
 
     g_heat_year_lbl = gtk_label_new(NULL);
-    gtk_widget_set_size_request(g_heat_year_lbl, 120, -1);
+    gtk_widget_set_size_request(g_heat_year_lbl, 130, -1);
     gtk_misc_set_alignment(GTK_MISC(g_heat_year_lbl), 0.5, 0.5);
     gtk_box_pack_start(GTK_BOX(yr_hbox), g_heat_year_lbl, FALSE, FALSE, 0);
 
     GtkWidget *yr_next = gtk_button_new();
     GtkWidget *yr_next_lbl = gtk_label_new(NULL);
-    gtk_label_set_markup(GTK_LABEL(yr_next_lbl), "<span size='11000'>&gt;&gt;</span>");
+    gtk_label_set_markup(GTK_LABEL(yr_next_lbl), "<span size='14000'>&gt;&gt;</span>");
     gtk_container_add(GTK_CONTAINER(yr_next), yr_next_lbl);
     g_signal_connect(yr_next, "clicked", G_CALLBACK(on_heat_year_next), NULL);
     gtk_box_pack_start(GTK_BOX(yr_hbox), yr_next, FALSE, FALSE, 0);
-
     gtk_container_add(GTK_CONTAINER(yr_eb), yr_hbox);
-    gtk_box_pack_start(GTK_BOX(heat_hdr), yr_eb, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(ctrl_hbox), yr_eb, FALSE, FALSE, 0);
 
-    // Visual separator (just a space)
-    GtkWidget *sp1 = gtk_label_new("  ");
-    gtk_box_pack_start(GTK_BOX(heat_hdr), sp1, FALSE, FALSE, 0);
+    // Spacer
+    GtkWidget *sp = gtk_label_new("    ");
+    gtk_box_pack_start(GTK_BOX(ctrl_hbox), sp, FALSE, FALSE, 0);
 
-    // Month group: same structure
+    // Month group
     GtkWidget *mo_eb = gtk_event_box_new();
-    gtk_widget_modify_bg(mo_eb, GTK_STATE_NORMAL, &ebg);
-
+    gtk_widget_modify_bg(mo_eb, GTK_STATE_NORMAL, &white);
     GtkWidget *mo_hbox = gtk_hbox_new(FALSE, 0);
     GtkWidget *mo_prev = gtk_button_new();
     GtkWidget *mo_prev_lbl = gtk_label_new(NULL);
-    gtk_label_set_markup(GTK_LABEL(mo_prev_lbl), "<span size='11000'>&lt;&lt;</span>");
+    gtk_label_set_markup(GTK_LABEL(mo_prev_lbl), "<span size='14000'>&lt;&lt;</span>");
     gtk_container_add(GTK_CONTAINER(mo_prev), mo_prev_lbl);
     g_signal_connect(mo_prev, "clicked", G_CALLBACK(on_heat_month_prev), NULL);
     gtk_box_pack_start(GTK_BOX(mo_hbox), mo_prev, FALSE, FALSE, 0);
 
     g_heat_month_lbl = gtk_label_new(NULL);
-    gtk_widget_set_size_request(g_heat_month_lbl, 80, -1);
+    gtk_widget_set_size_request(g_heat_month_lbl, 90, -1);
     gtk_misc_set_alignment(GTK_MISC(g_heat_month_lbl), 0.5, 0.5);
     gtk_box_pack_start(GTK_BOX(mo_hbox), g_heat_month_lbl, FALSE, FALSE, 0);
 
     GtkWidget *mo_next = gtk_button_new();
     GtkWidget *mo_next_lbl = gtk_label_new(NULL);
-    gtk_label_set_markup(GTK_LABEL(mo_next_lbl), "<span size='11000'>&gt;&gt;</span>");
+    gtk_label_set_markup(GTK_LABEL(mo_next_lbl), "<span size='14000'>&gt;&gt;</span>");
     gtk_container_add(GTK_CONTAINER(mo_next), mo_next_lbl);
     g_signal_connect(mo_next, "clicked", G_CALLBACK(on_heat_month_next), NULL);
     gtk_box_pack_start(GTK_BOX(mo_hbox), mo_next, FALSE, FALSE, 0);
-
     gtk_container_add(GTK_CONTAINER(mo_eb), mo_hbox);
-    gtk_box_pack_start(GTK_BOX(heat_hdr), mo_eb, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(ctrl_hbox), mo_eb, FALSE, FALSE, 0);
 
-    gtk_box_pack_start(GTK_BOX(heat_vbox), heat_hdr, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(heat_vbox), ctrl_hbox, FALSE, FALSE, 0);
 
-    // Content: left chart + right stats
-    GtkWidget *heat_content = gtk_hbox_new(FALSE, 8);
+    // Content: left chart, right 2x2 stats grid
+    GtkWidget *heat_content = gtk_hbox_new(FALSE, 14);
     gtk_box_pack_start(GTK_BOX(heat_vbox), heat_content, TRUE, TRUE, 0);
 
-    // Left: heatmap drawing area (capped at smaller width to give stats more room)
+    // LEFT: heatmap drawing area (fixed width)
     g_heat_drawing_area = gtk_drawing_area_new();
-    gtk_widget_set_size_request(g_heat_drawing_area, 450, 100);
+    gtk_widget_set_size_request(g_heat_drawing_area, 480, 110);
     g_signal_connect(g_heat_drawing_area, "expose-event", G_CALLBACK(on_expose_heatmap_monthly), NULL);
     gtk_box_pack_start(GTK_BOX(heat_content), g_heat_drawing_area, FALSE, FALSE, 0);
 
-    // Right: compact stats text (4 items, smaller font, wider for more room)
-    g_heat_stats_label = gtk_label_new(NULL);
-    gtk_misc_set_alignment(GTK_MISC(g_heat_stats_label), 0.0, 0.0);
-    gtk_widget_set_size_request(g_heat_stats_label, 220, -1);
-    gtk_box_pack_start(GTK_BOX(heat_content), g_heat_stats_label, TRUE, TRUE, 0);
+    // RIGHT: 2x2 grid of stats
+    GtkWidget *stats_grid = gtk_table_new(2, 2, FALSE);
+    gtk_table_set_col_spacings(GTK_TABLE(stats_grid), 16);
+    gtk_table_set_row_spacings(GTK_TABLE(stats_grid), 4);
 
-    // Apply initial state
+    // Build stats values
+    char val_total[32], val_active[32], val_streak[32], val_avg[32];
+    sprintf(val_total, "%.1f 小时", get_total_reading_minutes() / 60.0);
+    sprintf(val_active, "%d 天", get_active_days());
+    sprintf(val_streak, "%d 天", get_max_streak());
+    sprintf(val_avg, "%d 分钟", get_avg_daily_min());
+
+    GtkWidget *c1 = create_stat_cell("累计阅读", val_total);
+    GtkWidget *c2 = create_stat_cell("活跃天数", val_active);
+    GtkWidget *c3 = create_stat_cell("最长连读", val_streak);
+    GtkWidget *c4 = create_stat_cell("日均阅读", val_avg);
+    gtk_table_attach_defaults(GTK_TABLE(stats_grid), c1, 0, 1, 0, 1);
+    gtk_table_attach_defaults(GTK_TABLE(stats_grid), c2, 1, 2, 0, 1);
+    gtk_table_attach_defaults(GTK_TABLE(stats_grid), c3, 0, 1, 1, 2);
+    gtk_table_attach_defaults(GTK_TABLE(stats_grid), c4, 1, 2, 1, 2);
+    gtk_box_pack_start(GTK_BOX(heat_content), stats_grid, TRUE, TRUE, 0);
+
     refresh_heat_canvas();
-
     gtk_box_pack_start(GTK_BOX(vbox), heat_eb, FALSE, FALSE, 0);
 
-    // ===== Gold Hour (24h bar) - subtitle on right to give chart more space =====
+    // ===== Gold Hour (24h bar) - title on top, subtitle BELOW =====
     GtkWidget *gold_eb = gtk_event_box_new();
     GdkColor goldbg;
     gdk_color_parse("#ffffff", &goldbg);
@@ -373,30 +347,29 @@ GtkWidget* create_dashboard_page() {
     gtk_container_add(GTK_CONTAINER(gold_eb), gold_frame);
 
     GtkWidget *gold_vbox = gtk_vbox_new(FALSE, 3);
-    gtk_container_set_border_width(GTK_CONTAINER(gold_vbox), 6);
+    gtk_container_set_border_width(GTK_CONTAINER(gold_vbox), 8);
     gtk_container_add(GTK_CONTAINER(gold_frame), gold_vbox);
 
-    // Header: title (left) + subtitle (right)
-    GtkWidget *gold_hdr = gtk_hbox_new(FALSE, 4);
+    // Title (on its own line, full width)
     GtkWidget *gold_title_lbl = gtk_label_new(NULL);
     gtk_label_set_markup(GTK_LABEL(gold_title_lbl), "<span size='12000' weight='bold'>最爱阅读时段</span>");
     gtk_misc_set_alignment(GTK_MISC(gold_title_lbl), 0.0, 0.5);
-    gtk_box_pack_start(GTK_BOX(gold_hdr), gold_title_lbl, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(gold_vbox), gold_title_lbl, FALSE, FALSE, 0);
 
+    // Subtitle BELOW the title
     GtkWidget *gold_sub_lbl = gtk_label_new(NULL);
-    gtk_label_set_markup(GTK_LABEL(gold_sub_lbl), "<span size='10000' color='#505050'>最常在 18:00 - 21:00</span>");
-    gtk_misc_set_alignment(GTK_MISC(gold_sub_lbl), 1.0, 0.5);
-    gtk_box_pack_end(GTK_BOX(gold_hdr), gold_sub_lbl, FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(gold_vbox), gold_hdr, FALSE, FALSE, 0);
+    gtk_label_set_markup(GTK_LABEL(gold_sub_lbl), "<span size='10000' color='#505050'>最常在 18:00 - 21:00 分布</span>");
+    gtk_misc_set_alignment(GTK_MISC(gold_sub_lbl), 0.0, 0.5);
+    gtk_box_pack_start(GTK_BOX(gold_vbox), gold_sub_lbl, FALSE, FALSE, 0);
 
-    // Bar chart (taller, ~180px for bigger hour labels and bars)
+    // Bar chart (taller for more spacious layout)
     GtkWidget *bar24_da = gtk_drawing_area_new();
-    gtk_widget_set_size_request(bar24_da, -1, 180);
+    gtk_widget_set_size_request(bar24_da, -1, 200);
     g_signal_connect(bar24_da, "expose-event", G_CALLBACK(on_expose_bar24), NULL);
     gtk_box_pack_start(GTK_BOX(gold_vbox), bar24_da, TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(vbox), gold_eb, FALSE, FALSE, 0);
 
-    // ===== 7-day trend hbar (no subtitle, simpler header) =====
+    // ===== 7-day trend hbar =====
     GtkWidget *hbar_eb = gtk_event_box_new();
     GdkColor hbarbg;
     gdk_color_parse("#ffffff", &hbarbg);
@@ -407,7 +380,7 @@ GtkWidget* create_dashboard_page() {
     gtk_container_add(GTK_CONTAINER(hbar_eb), hbar_frame);
 
     GtkWidget *hbar_vbox = gtk_vbox_new(FALSE, 3);
-    gtk_container_set_border_width(GTK_CONTAINER(hbar_vbox), 6);
+    gtk_container_set_border_width(GTK_CONTAINER(hbar_vbox), 8);
     gtk_container_add(GTK_CONTAINER(hbar_frame), hbar_vbox);
 
     GtkWidget *hbar_title_lbl = gtk_label_new(NULL);
@@ -415,9 +388,8 @@ GtkWidget* create_dashboard_page() {
     gtk_misc_set_alignment(GTK_MISC(hbar_title_lbl), 0.0, 0.5);
     gtk_box_pack_start(GTK_BOX(hbar_vbox), hbar_title_lbl, FALSE, FALSE, 0);
 
-    // hbar drawing area (taller for spacious layout, no gray track)
     GtkWidget *hbar_da = gtk_drawing_area_new();
-    gtk_widget_set_size_request(hbar_da, -1, 200);
+    gtk_widget_set_size_request(hbar_da, -1, 220);
     g_signal_connect(hbar_da, "expose-event", G_CALLBACK(on_expose_hbar), NULL);
     gtk_box_pack_start(GTK_BOX(hbar_vbox), hbar_da, TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(vbox), hbar_eb, FALSE, FALSE, 0);
