@@ -34,12 +34,12 @@ static int get_avg_daily_min() {
 static void refresh_heat_date_labels() {
     if (g_heat_year_lbl) {
         char m[64];
-        sprintf(m, "<span size='14000' weight='bold'>%d年</span>", g_heat_year);
+        sprintf(m, "<span size='11000' weight='bold'>%d年</span>", g_heat_year);
         gtk_label_set_markup(GTK_LABEL(g_heat_year_lbl), m);
     }
     if (g_heat_month_lbl) {
         char m[64];
-        sprintf(m, "<span size='14000' weight='bold'>%d月</span>", g_heat_month);
+        sprintf(m, "<span size='11000' weight='bold'>%d月</span>", g_heat_month);
         gtk_label_set_markup(GTK_LABEL(g_heat_month_lbl), m);
     }
 }
