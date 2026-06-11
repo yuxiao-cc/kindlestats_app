@@ -31,18 +31,11 @@ void force_eink_refresh() {
 }
 
 GtkWidget* create_chart_card(const char* title, const char* subtitle, GtkWidget** content_area) {
-    GtkWidget *event_box = gtk_event_box_new();
-    GdkColor white;
-    gdk_color_parse("#ffffff", &white);
-    gtk_widget_modify_bg(event_box, GTK_STATE_NORMAL, &white);
-    
-    GtkWidget *frame = gtk_frame_new(NULL);
-    gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_OUT);
-    gtk_container_add(GTK_CONTAINER(event_box), frame);
-
     GtkWidget *vbox = gtk_vbox_new(FALSE, 6);
-    gtk_container_set_border_width(GTK_CONTAINER(vbox), 8);
-    gtk_container_add(GTK_CONTAINER(frame), vbox);
+    gtk_container_set_border_width(GTK_CONTAINER(vbox), 4);
+    
+    GtkWidget *separator = gtk_hseparator_new();
+    gtk_box_pack_start(GTK_BOX(vbox), separator, FALSE, FALSE, 4);
     
     GtkWidget *header_hbox = gtk_hbox_new(FALSE, 10);
     GtkWidget *title_vbox = gtk_vbox_new(FALSE, 2);
@@ -67,7 +60,7 @@ GtkWidget* create_chart_card(const char* title, const char* subtitle, GtkWidget*
     *content_area = gtk_vbox_new(FALSE, 0);
     gtk_box_pack_start(GTK_BOX(vbox), *content_area, TRUE, TRUE, 0);
     
-    return event_box;
+    return vbox;
 }
 
 
@@ -552,7 +545,7 @@ int main(int argc, char *argv[]) {
     g_signal_connect(main_window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
 
     GdkColor bg_color;
-    gdk_color_parse("#f5f4ef", &bg_color); // Revert to old background color to be 100% safe
+    gdk_color_parse("#ffffff", &bg_color); // Pure white background
     gtk_widget_modify_bg(main_window, GTK_STATE_NORMAL, &bg_color);
 
     log_debug("Creating main window and vbox..."); GtkWidget *main_vbox = gtk_vbox_new(FALSE, 10);
