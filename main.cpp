@@ -4,43 +4,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/ioctl.h>
-#include <stdint.h>
 #include <string.h>
-
-#ifndef _IOW
-#define _IOC(dir,type,nr,size) \
-    (((dir) << 30) | ((type) << 8) | (nr) | ((size) << 16))
-#define _IOW(type,nr,size) _IOC(1, (type), (nr), sizeof(size))
-#endif
-
-struct mxcfb_rect {
-    uint32_t top, left, width, height;
-};
-
-struct mxcfb_update_data {
-    struct mxcfb_rect update_region;
-    uint32_t waveform_mode;
-    uint32_t update_mode;
-    uint32_t update_marker;
-    int32_t  temp;
-    uint32_t flags;
-    uint32_t alt_buffer_data[8];
-};
-
-#define WAVEFORM_MODE_GC16  2
-#define UPDATE_MODE_FULL    1
-#define TEMP_USE_AMBIENT   -1
-#ifndef FBIOGET_VSCREENINFO
-#define FBIOGET_VSCREENINFO 0x4600
-#endif
-
-struct fb_var_screeninfo_lite {
-    uint32_t xres, yres;
-    uint32_t pad[20];
-};
 
 void log_debug(const char* msg) {
     FILE *f = fopen("/mnt/us/kindlestats_debug.log", "a");
@@ -57,56 +21,7 @@ GtkWidget *dashboard_page;
 GtkWidget *books_page;
 GtkWidget *history_page;
 
-void force_eink_refresh();
 GtkWidget* create_chart_card(const char* title, const char* subtitle, GtkWidget** content_area);
-
-
-
-void force_eink_refresh() {
-    log_debug("Forcing e-ink refresh via MXCFB ioctl...");
-    int fd = open("/dev/fb0", O_RDWR);
-    if (fd < 0) {
-        log_debug("Cannot open /dev/fb0, trying eips -f");
-        system("eips -f");
-        return;
-    }
-
-    uint32_t scr_w = 758, scr_h = 1024;
-    struct fb_var_screeninfo_lite vinfo;
-    if (ioctl(fd, FBIOGET_VSCREENINFO, &vinfo) == 0) {
-        scr_w = vinfo.xres;
-        scr_h = vinfo.yres;
-    }
-    char dbg[128];
-    sprintf(dbg, "Screen size: %ux%u", scr_w, scr_h);
-    log_debug(dbg);
-
-    struct mxcfb_update_data update;
-    memset(&update, 0, sizeof(update));
-    update.update_region.top = 0;
-    update.update_region.left = 0;
-    update.update_region.width = scr_w;
-    update.update_region.height = scr_h;
-    update.waveform_mode = WAVEFORM_MODE_GC16;
-    update.update_mode = UPDATE_MODE_FULL;
-    update.update_marker = 1;
-    update.temp = TEMP_USE_AMBIENT;
-
-    int ret = ioctl(fd, _IOW('F', 0x2E, struct mxcfb_update_data), &update);
-    if (ret < 0) {
-        log_debug("ioctl 0x2E failed, trying 0x2B");
-        ret = ioctl(fd, _IOW('F', 0x2B, struct mxcfb_update_data), &update);
-    }
-    if (ret < 0) {
-        log_debug("ioctl 0x2B failed, trying 0x91 (newer Kindle)");
-        ret = ioctl(fd, _IOW('F', 0x91, struct mxcfb_update_data), &update);
-    }
-
-    sprintf(dbg, "Final ioctl ret=%d", ret);
-    log_debug(dbg);
-
-    close(fd);
-}
 
 GtkWidget* create_chart_card(const char* title, const char* subtitle, GtkWidget** content_area) {
     GtkWidget *vbox = gtk_vbox_new(FALSE, 6);
@@ -609,9 +524,6 @@ static void on_tab_clicked(GtkWidget *widget, gpointer data) {
     if (tab_index == 1) gtk_widget_show(dashboard_page);
     else if (tab_index == 2) gtk_widget_show(books_page);
     else if (tab_index == 3) gtk_widget_show(history_page);
-    
-    while (gtk_events_pending()) gtk_main_iteration();
-    force_eink_refresh();
 }
 
 int main(int argc, char *argv[]) {
@@ -619,8 +531,7 @@ int main(int argc, char *argv[]) {
 
     main_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_title(GTK_WINDOW(main_window), "KindleStats");
-    gtk_window_fullscreen(GTK_WINDOW(main_window));
-    gtk_window_set_decorated(GTK_WINDOW(main_window), FALSE);
+    gtk_window_set_default_size(GTK_WINDOW(main_window), 1072, 1448);
     g_signal_connect(main_window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
 
     GdkColor bg_color;
@@ -692,9 +603,6 @@ int main(int argc, char *argv[]) {
     
     log_debug("Waiting for GTK to render...");
     while (gtk_events_pending()) gtk_main_iteration();
-
-    log_debug("Triggering initial e-ink refresh...");
-    force_eink_refresh();
 
     log_debug("Entering gtk_main...");
     gtk_main();
