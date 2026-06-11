@@ -1,8 +1,20 @@
+
 #include <gtk/gtk.h>
 #include <cairo.h>
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
+
+void log_debug(const char* msg) {
+    FILE *f = fopen("/mnt/us/kindlestats_debug.log", "a");
+    if (!f) f = fopen("kindlestats_debug.log", "a");
+    if (f) {
+        fprintf(f, "%s
+", msg);
+        fclose(f);
+    }
+}
+
 
 GtkWidget *main_window;
 GtkWidget *dashboard_page;
@@ -11,11 +23,11 @@ GtkWidget *history_page;
 
 void force_eink_refresh();
 GtkWidget* create_chart_card(const char* title, const char* subtitle, GtkWidget** content_area);
-static void show_monthly_dialog(int month);
+
 
 
 void force_eink_refresh() {
-    system("eips -c");
+    log_debug("Calling eips -c..."); system("eips -c"); log_debug("Entering gtk_main...");
     gtk_widget_queue_draw(main_window);
 }
 
@@ -61,6 +73,7 @@ GtkWidget* create_chart_card(const char* title, const char* subtitle, GtkWidget*
 
 
 static gboolean on_expose_timeline(GtkWidget *widget, GdkEventExpose *event, gpointer data) {
+    log_debug("on_expose_timeline called");
     cairo_t *cr = gdk_cairo_create(widget->window);
     cairo_set_source_rgb(cr, 1.0, 1.0, 1.0);
     cairo_paint(cr);
@@ -312,174 +325,13 @@ GtkWidget* create_books_page() {
 }
 
 
-static int current_month_for_modal = 1;
 
-// ------------------- Monthly Heatmap Dialog -------------------
-
-static gboolean on_expose_monthly_heatmap(GtkWidget *widget, GdkEventExpose *event, gpointer data) {
-    cairo_t *cr = gdk_cairo_create(widget->window);
-    cairo_set_source_rgb(cr, 1.0, 1.0, 1.0);
-    cairo_paint(cr);
-    
-    double pad_x = 5.0, pad_y = 5.0;
-    double cell_size = 18.0;
-    double gap = 3.0;
-    
-    // Draw day headers (Mon - Sun)
-    const char* days[] = {"一", "二", "三", "四", "五", "六", "日"};
-    cairo_set_font_size(cr, 10.0);
-    cairo_select_font_face(cr, "Sans", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
-    cairo_set_source_rgb(cr, 0.3, 0.3, 0.3);
-    for (int i = 0; i < 7; ++i) {
-        cairo_text_extents_t extents;
-        cairo_text_extents(cr, days[i], &extents);
-        double x = pad_x + i * (cell_size + gap);
-        cairo_move_to(cr, x + cell_size/2.0 - extents.width/2.0, pad_y + 10.0);
-        cairo_show_text(cr, days[i]);
-    }
-    
-    double grid_y_start = pad_y + 15.0;
-    
-    // Mock days layout logic
-    int first_day_of_week = (current_month_for_modal + 2) % 7; // Mock
-    int days_in_month = 30;
-    if (current_month_for_modal == 2) days_in_month = 28;
-    else if (current_month_for_modal == 1 || current_month_for_modal == 3 || current_month_for_modal == 5 || current_month_for_modal == 7 || current_month_for_modal == 8 || current_month_for_modal == 10 || current_month_for_modal == 12) days_in_month = 31;
-    
-    for (int day = 1; day <= days_in_month; ++day) {
-        int pos = first_day_of_week + day - 1;
-        int col = pos % 7;
-        int row = pos / 7;
-        
-        double x = pad_x + col * (cell_size + gap);
-        double y = grid_y_start + row * (cell_size + gap);
-        
-        double seed = sin(day + current_month_for_modal + 2026.0);
-        if (seed > 0.7) cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);
-        else if (seed > 0.4) cairo_set_source_rgb(cr, 0.4, 0.4, 0.4);
-        else if (seed > 0.1) cairo_set_source_rgb(cr, 0.66, 0.66, 0.66);
-        else if (seed > -0.3) cairo_set_source_rgb(cr, 0.86, 0.86, 0.86);
-        else cairo_set_source_rgb(cr, 1.0, 1.0, 1.0);
-        
-        cairo_rectangle(cr, x, y, cell_size, cell_size);
-        cairo_fill_preserve(cr);
-        cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);
-        cairo_set_line_width(cr, 1.0);
-        cairo_stroke(cr);
-    }
-    
-    cairo_destroy(cr);
-    return FALSE;
-}
-
-static void on_modal_close(GtkWidget *widget, gpointer data) {
-    GtkWidget *dialog = GTK_WIDGET(data);
-    gtk_widget_destroy(dialog);
-    force_eink_refresh();
-}
-
-static void show_monthly_dialog(int month) {
-    current_month_for_modal = month;
-    
-    GtkWidget *dialog = gtk_dialog_new();
-    gtk_window_set_decorated(GTK_WINDOW(dialog), FALSE);
-    gtk_window_set_position(GTK_WINDOW(dialog), GTK_WIN_POS_CENTER);
-    gtk_window_set_modal(GTK_WINDOW(dialog), TRUE);
-    
-    GdkColor white, black;
-    gdk_color_parse("#ffffff", &white);
-    gdk_color_parse("#000000", &black);
-    gtk_widget_modify_bg(dialog, GTK_STATE_NORMAL, &white);
-    
-    // Create a 2px black border around the dialog content
-    GtkWidget *frame = gtk_frame_new(NULL);
-    gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_OUT);
-    
-    GtkWidget *content_area = GTK_DIALOG(dialog)->vbox;
-    gtk_container_add(GTK_CONTAINER(content_area), frame);
-    
-    GtkWidget *main_vbox = gtk_vbox_new(FALSE, 10);
-    gtk_container_set_border_width(GTK_CONTAINER(main_vbox), 20);
-    gtk_container_add(GTK_CONTAINER(frame), main_vbox);
-    
-    // Title
-    char title_buf[128];
-    sprintf(title_buf, "<span size='16000' weight='bold'>2026年 %d月 阅读概况</span>", month);
-    GtkWidget *title_lbl = gtk_label_new(NULL);
-    gtk_label_set_markup(GTK_LABEL(title_lbl), title_buf);
-    gtk_box_pack_start(GTK_BOX(main_vbox), title_lbl, FALSE, FALSE, 0);
-    
-    // Horizontal Layout for Grid and Stats
-    GtkWidget *split_hbox = gtk_hbox_new(FALSE, 20);
-    
-    // Left: Monthly Heatmap Grid
-    GtkWidget *monthly_da = gtk_drawing_area_new();
-    gtk_widget_set_size_request(monthly_da, 160, 140);
-    g_signal_connect(monthly_da, "expose-event", G_CALLBACK(on_expose_monthly_heatmap), NULL);
-    gtk_box_pack_start(GTK_BOX(split_hbox), monthly_da, FALSE, FALSE, 0);
-    
-    // Right: Stats
-    GtkWidget *stats_vbox = gtk_vbox_new(FALSE, 8);
-    gtk_box_pack_start(GTK_BOX(split_hbox), stats_vbox, TRUE, TRUE, 0);
-    
-    int total_h = 6 + (month % 3) * 2;
-    int active_d = 10 + month;
-    int max_s = 2 + month % 4;
-    
-    char stat_buf[256];
-    
-    sprintf(stat_buf, "<span size='12000' weight='bold'>本月统计汇总:</span>");
-    GtkWidget *s1 = gtk_label_new(NULL);
-    gtk_label_set_markup(GTK_LABEL(s1), stat_buf);
-    gtk_misc_set_alignment(GTK_MISC(s1), 0.0, 0.5);
-    gtk_box_pack_start(GTK_BOX(stats_vbox), s1, FALSE, FALSE, 0);
-    
-    sprintf(stat_buf, "<span size='12000'>• 累计阅读: <b>%d 小时</b></span>", total_h);
-    GtkWidget *s2 = gtk_label_new(NULL);
-    gtk_label_set_markup(GTK_LABEL(s2), stat_buf);
-    gtk_misc_set_alignment(GTK_MISC(s2), 0.0, 0.5);
-    gtk_box_pack_start(GTK_BOX(stats_vbox), s2, FALSE, FALSE, 0);
-    
-    sprintf(stat_buf, "<span size='12000'>• 活跃天数: <b>%d 天</b> / 30天</span>", active_d);
-    GtkWidget *s3 = gtk_label_new(NULL);
-    gtk_label_set_markup(GTK_LABEL(s3), stat_buf);
-    gtk_misc_set_alignment(GTK_MISC(s3), 0.0, 0.5);
-    gtk_box_pack_start(GTK_BOX(stats_vbox), s3, FALSE, FALSE, 0);
-    
-    sprintf(stat_buf, "<span size='12000'>• 最长连读: <b>%d 天</b></span>", max_s);
-    GtkWidget *s4 = gtk_label_new(NULL);
-    gtk_label_set_markup(GTK_LABEL(s4), stat_buf);
-    gtk_misc_set_alignment(GTK_MISC(s4), 0.0, 0.5);
-    gtk_box_pack_start(GTK_BOX(stats_vbox), s4, FALSE, FALSE, 0);
-    
-    gtk_box_pack_start(GTK_BOX(main_vbox), split_hbox, TRUE, TRUE, 10);
-    
-    // Close Button
-    GtkWidget *close_btn = gtk_button_new();
-    GtkWidget *close_lbl = gtk_label_new("<span size='13000' weight='bold'>关闭 [X]</span>");
-    gtk_label_set_markup(GTK_LABEL(close_lbl), "<span size='13000' weight='bold'>关闭 [X]</span>");
-    gtk_container_add(GTK_CONTAINER(close_btn), close_lbl);
-    g_signal_connect(close_btn, "clicked", G_CALLBACK(on_modal_close), dialog);
-    
-    GtkWidget *close_hbox = gtk_hbox_new(FALSE, 0);
-    gtk_box_pack_end(GTK_BOX(close_hbox), close_btn, FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(main_vbox), close_hbox, FALSE, FALSE, 0);
-    
-    gtk_widget_show_all(dialog);
-    
-    force_eink_refresh();
-    gtk_dialog_run(GTK_DIALOG(dialog));
-}
-
-static gboolean on_month_label_press(GtkWidget *widget, GdkEventButton *event, gpointer data) {
-    int month = GPOINTER_TO_INT(data);
-    show_monthly_dialog(month);
-    return TRUE;
-}
 
 // ------------------- Annual Heatmap -------------------
 
 static gboolean on_expose_heatmap(GtkWidget *widget, GdkEventExpose *event, gpointer data) {
+    log_debug("on_expose_heatmap called");
+    cairo_t *cr = gdk_cairo_create(widget->window);(GtkWidget *widget, GdkEventExpose *event, gpointer data) {
     cairo_t *cr = gdk_cairo_create(widget->window);
     cairo_set_source_rgb(cr, 1.0, 1.0, 1.0);
     cairo_paint(cr);
@@ -517,6 +369,7 @@ static gboolean on_expose_heatmap(GtkWidget *widget, GdkEventExpose *event, gpoi
 // ------------------- 24h Bar Chart -------------------
 
 static gboolean on_expose_bar24(GtkWidget *widget, GdkEventExpose *event, gpointer data) {
+    log_debug("on_expose_bar24 called");
     cairo_t *cr = gdk_cairo_create(widget->window);
     cairo_set_source_rgb(cr, 1.0, 1.0, 1.0);
     cairo_paint(cr);
@@ -563,6 +416,7 @@ static gboolean on_expose_bar24(GtkWidget *widget, GdkEventExpose *event, gpoint
 // ------------------- 7-Day Trend HBar Chart -------------------
 
 static gboolean on_expose_hbar(GtkWidget *widget, GdkEventExpose *event, gpointer data) {
+    log_debug("on_expose_hbar called");
     cairo_t *cr = gdk_cairo_create(widget->window);
     cairo_set_source_rgb(cr, 1.0, 1.0, 1.0);
     cairo_paint(cr);
@@ -645,23 +499,7 @@ GtkWidget* create_dashboard_page() {
     GtkWidget *heat_content;
     GtkWidget *heat_card = create_chart_card("年度阅读热力图", NULL, &heat_content);
     
-    // Month Buttons Header
-    GtkWidget *months_hbox = gtk_hbox_new(TRUE, 2);
-    for (int i = 1; i <= 12; ++i) {
-        GtkWidget *evt_box = gtk_event_box_new();
-        GdkColor white; gdk_color_parse("#ffffff", &white);
-        gtk_widget_modify_bg(evt_box, GTK_STATE_NORMAL, &white);
-        
-        char lbl_buf[128];
-        sprintf(lbl_buf, "<span size='11000' underline='single'>%d月</span>", i);
-        GtkWidget *lbl = gtk_label_new(NULL);
-        gtk_label_set_markup(GTK_LABEL(lbl), lbl_buf);
-        gtk_container_add(GTK_CONTAINER(evt_box), lbl);
-        
-        g_signal_connect(evt_box, "button-press-event", G_CALLBACK(on_month_label_press), GINT_TO_POINTER(i));
-        gtk_box_pack_start(GTK_BOX(months_hbox), evt_box, TRUE, TRUE, 0);
-    }
-    gtk_box_pack_start(GTK_BOX(heat_content), months_hbox, FALSE, FALSE, 4);
+    
 
     GtkWidget *heatmap_da = gtk_drawing_area_new();
     gtk_widget_set_size_request(heatmap_da, -1, 140); 
@@ -707,7 +545,7 @@ static void on_tab_clicked(GtkWidget *widget, gpointer data) {
 }
 
 int main(int argc, char *argv[]) {
-    gtk_init(&argc, &argv);
+    log_debug("=== Starting KindleStats ==="); gtk_init(&argc, &argv); log_debug("gtk_init done");
 
     main_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_title(GTK_WINDOW(main_window), "KindleStats");
@@ -719,7 +557,7 @@ int main(int argc, char *argv[]) {
     gdk_color_parse("#f5f4ef", &bg_color); // Revert to old background color to be 100% safe
     gtk_widget_modify_bg(main_window, GTK_STATE_NORMAL, &bg_color);
 
-    GtkWidget *main_vbox = gtk_vbox_new(FALSE, 10);
+    log_debug("Creating main window and vbox..."); GtkWidget *main_vbox = gtk_vbox_new(FALSE, 10);
     gtk_container_set_border_width(GTK_CONTAINER(main_vbox), 20);
     gtk_container_add(GTK_CONTAINER(main_window), main_vbox);
 
@@ -768,21 +606,21 @@ int main(int argc, char *argv[]) {
     GtkWidget *content_vbox = gtk_vbox_new(FALSE, 16);
     gtk_box_pack_start(GTK_BOX(main_vbox), content_vbox, TRUE, TRUE, 0);
 
-    dashboard_page = create_dashboard_page();
-    books_page = create_books_page();
-    history_page = create_history_page();
+    log_debug("Creating dashboard_page..."); dashboard_page = create_dashboard_page();
+    log_debug("Creating books_page..."); books_page = create_books_page();
+    log_debug("Creating history_page..."); history_page = create_history_page();
     
     gtk_box_pack_start(GTK_BOX(content_vbox), dashboard_page, TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(content_vbox), books_page, TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(content_vbox), history_page, TRUE, TRUE, 0);
 
-    gtk_widget_show_all(main_window);
+    log_debug("Calling gtk_widget_show_all..."); gtk_widget_show_all(main_window);
     
     // Hide pages except dashboard initially
     gtk_widget_hide(books_page);
     gtk_widget_hide(history_page);
     
-    system("eips -c"); // Initial clear is fine now that we're explicitly triggering refresh on tab clicks
+    log_debug("Calling eips -c..."); system("eips -c"); log_debug("Entering gtk_main..."); // Initial clear is fine now that we're explicitly triggering refresh on tab clicks
     gtk_main();
     return 0;
 }
