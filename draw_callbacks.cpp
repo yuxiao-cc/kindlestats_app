@@ -46,7 +46,7 @@ gboolean on_expose_bar24(GtkWidget *widget, GdkEventExpose *event, gpointer data
 
     double pad_x = 10.0, pad_y = 10.0;
     double area_w = widget->allocation.width - pad_x * 2;
-    double area_h = widget->allocation.height - pad_y * 2 - 28.0;
+    double area_h = widget->allocation.height - pad_y * 2 - 30.0;
     double base_y = widget->allocation.height - pad_y - 18.0;
 
     cairo_set_source_rgb(cr, 0, 0, 0);
@@ -58,7 +58,7 @@ gboolean on_expose_bar24(GtkWidget *widget, GdkEventExpose *event, gpointer data
     double mock_data[24] = {5,2,0,0,0,0,5,15,30,20,10,15,25,40,20,10,15,25,60,80,95,85,40,15};
     double bar_w = (area_w - 23 * 2.0) / 24.0;
 
-    cairo_set_font_size(cr, 18);
+    cairo_set_font_size(cr, 22);
     cairo_select_font_face(cr, "Sans", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
 
     for (int i = 0; i < 24; i++) {
@@ -72,7 +72,7 @@ gboolean on_expose_bar24(GtkWidget *widget, GdkEventExpose *event, gpointer data
             sprintf(lbl, "%d", i);
             cairo_text_extents_t ext;
             cairo_text_extents(cr, lbl, &ext);
-            cairo_move_to(cr, x + bar_w/2.0 - ext.width/2.0, base_y + 16.0);
+            cairo_move_to(cr, x + bar_w/2.0 - ext.width/2.0, base_y + 18.0);
             cairo_show_text(cr, lbl);
         }
     }
@@ -90,33 +90,29 @@ gboolean on_expose_hbar(GtkWidget *widget, GdkEventExpose *event, gpointer data)
     const char* days[] = {"周五","周六","周日","周一","周二","周三","今日"};
     double vals[] = {45, 12, 90, 35, 50, 70, 80};
 
-    double start_y = 18.0;
+    double start_y = 16.0;
     double row_h = (widget->allocation.height - start_y - 10.0) / 7.0;
 
-    cairo_set_font_size(cr, 22);
+    cairo_set_font_size(cr, 24);
     cairo_select_font_face(cr, "Sans", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
 
     for (int i = 0; i < 7; i++) {
         double y = start_y + i * row_h;
         cairo_set_source_rgb(cr, 0, 0, 0);
         // Day label (wider column)
-        cairo_move_to(cr, 12, y + row_h/2.0 + 7.0);
+        cairo_move_to(cr, 12, y + row_h/2.0 + 8.0);
         cairo_show_text(cr, days[i]);
 
-        // Bar track (wider, starting after day label)
-        double tx = 95, tw = widget->allocation.width - 180, th = 20;
+        // Bar track (wider, starting after day label, less right margin for value)
+        double tx = 100, tw = widget->allocation.width - 195, th = 24;
         double ty = y + (row_h - th)/2.0;
-        // Track background (light gray)
-        cairo_set_source_rgb(cr, 0.92, 0.92, 0.92);
-        cairo_rectangle(cr, tx, ty, tw, th);
-        cairo_fill(cr);
-        // Filled bar
+        // Filled bar (no track background - just the bar with outline)
         double fw = tw * (vals[i] / 100.0);
-        cairo_set_source_rgb(cr, i%2==0 ? 0.3 : 0.0, i%2==0 ? 0.3 : 0.0, i%2==0 ? 0.3 : 0.0);
+        cairo_set_source_rgb(cr, i%2==0 ? 0.35 : 0.0, i%2==0 ? 0.35 : 0.0, i%2==0 ? 0.35 : 0.0);
         cairo_rectangle(cr, tx, ty, fw, th);
         cairo_fill_preserve(cr);
         cairo_set_source_rgb(cr, 0, 0, 0);
-        cairo_set_line_width(cr, 1);
+        cairo_set_line_width(cr, 1.5);
         cairo_stroke(cr);
 
         // Value (right side, bigger font)
@@ -124,7 +120,7 @@ gboolean on_expose_hbar(GtkWidget *widget, GdkEventExpose *event, gpointer data)
         sprintf(vs, "%.0fm", vals[i]);
         cairo_text_extents_t ext;
         cairo_text_extents(cr, vs, &ext);
-        cairo_move_to(cr, tx + tw + 12, y + row_h/2.0 + 7.0);
+        cairo_move_to(cr, tx + tw + 10, y + row_h/2.0 + 8.0);
         cairo_show_text(cr, vs);
     }
     cairo_destroy(cr);
