@@ -84,23 +84,23 @@ static gboolean on_expose_heatmap_monthly(GtkWidget *widget, GdkEventExpose *eve
     int fw = first_weekday_of_month(g_heat_year, g_heat_month);
     int dm = days_in_month(g_heat_year, g_heat_month);
 
-    // Smaller overall: leave room for weekday header at top
-    double pad_x = 20.0, pad_y = 4.0;
-    double header_h = 22.0;
+    // Tighter horizontal padding to give cells more room
+    double pad_x = 4.0, pad_y = 4.0;
+    double header_h = 28.0;
     double cw = (w - pad_x * 2) / 7.0;
     double ch = (h - pad_y * 2 - header_h) / 6.0;
     if (cw < 8) cw = 8;
     if (ch < 8) ch = 8;
 
-    // Weekday headers (larger font)
+    // Weekday headers - larger font
     const char* dh[] = {"一","二","三","四","五","六","日"};
-    cairo_set_font_size(cr, 15);
+    cairo_set_font_size(cr, 20);
     cairo_select_font_face(cr, "Sans", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
     cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);
     for (int i = 0; i < 7; i++) {
         cairo_text_extents_t ext;
         cairo_text_extents(cr, dh[i], &ext);
-        cairo_move_to(cr, pad_x + i * cw + cw/2 - ext.width/2, pad_y + 14);
+        cairo_move_to(cr, pad_x + i * cw + cw/2 - ext.width/2, pad_y + 20);
         cairo_show_text(cr, dh[i]);
     }
 
@@ -272,73 +272,89 @@ GtkWidget* create_dashboard_page() {
     gtk_container_add(GTK_CONTAINER(heat_frame), heat_vbox);
 
     // Header row: title (left, expandable) + year/month controls (right)
-    GtkWidget *heat_hdr = gtk_hbox_new(FALSE, 4);
+    GtkWidget *heat_hdr = gtk_hbox_new(FALSE, 3);
 
     GtkWidget *heat_title_lbl = gtk_label_new(NULL);
     gtk_label_set_markup(GTK_LABEL(heat_title_lbl), "<span size='12000' weight='bold'>阅读热力图</span>");
     gtk_misc_set_alignment(GTK_MISC(heat_title_lbl), 0.0, 0.5);
     gtk_box_pack_start(GTK_BOX(heat_hdr), heat_title_lbl, TRUE, TRUE, 0);
 
-    // Year << [year] >>
+    // Year group: wrap in EventBox for e-ink + fixed-width label to prevent overlap
+    GtkWidget *yr_eb = gtk_event_box_new();
+    GdkColor ebg;
+    gdk_color_parse("#ffffff", &ebg);
+    gtk_widget_modify_bg(yr_eb, GTK_STATE_NORMAL, &ebg);
+
+    GtkWidget *yr_hbox = gtk_hbox_new(FALSE, 0);
     GtkWidget *yr_prev = gtk_button_new();
     GtkWidget *yr_prev_lbl = gtk_label_new(NULL);
-    gtk_label_set_markup(GTK_LABEL(yr_prev_lbl), "<span size='9000'>&lt;&lt;</span>");
+    gtk_label_set_markup(GTK_LABEL(yr_prev_lbl), "<span size='10000'>&lt;&lt;</span>");
     gtk_container_add(GTK_CONTAINER(yr_prev), yr_prev_lbl);
     g_signal_connect(yr_prev, "clicked", G_CALLBACK(on_heat_year_prev), NULL);
-    gtk_box_pack_start(GTK_BOX(heat_hdr), yr_prev, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(yr_hbox), yr_prev, FALSE, FALSE, 0);
 
     g_heat_year_lbl = gtk_label_new(NULL);
-    gtk_widget_set_size_request(g_heat_year_lbl, 60, -1);
+    gtk_widget_set_size_request(g_heat_year_lbl, 100, -1);
     gtk_misc_set_alignment(GTK_MISC(g_heat_year_lbl), 0.5, 0.5);
-    gtk_box_pack_start(GTK_BOX(heat_hdr), g_heat_year_lbl, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(yr_hbox), g_heat_year_lbl, FALSE, FALSE, 0);
 
     GtkWidget *yr_next = gtk_button_new();
     GtkWidget *yr_next_lbl = gtk_label_new(NULL);
-    gtk_label_set_markup(GTK_LABEL(yr_next_lbl), "<span size='9000'>&gt;&gt;</span>");
+    gtk_label_set_markup(GTK_LABEL(yr_next_lbl), "<span size='10000'>&gt;&gt;</span>");
     gtk_container_add(GTK_CONTAINER(yr_next), yr_next_lbl);
     g_signal_connect(yr_next, "clicked", G_CALLBACK(on_heat_year_next), NULL);
-    gtk_box_pack_start(GTK_BOX(heat_hdr), yr_next, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(yr_hbox), yr_next, FALSE, FALSE, 0);
 
-    // Separator
-    GtkWidget *hdr_sep = gtk_vseparator_new();
-    gtk_box_pack_start(GTK_BOX(heat_hdr), hdr_sep, FALSE, FALSE, 2);
+    gtk_container_add(GTK_CONTAINER(yr_eb), yr_hbox);
+    gtk_box_pack_start(GTK_BOX(heat_hdr), yr_eb, FALSE, FALSE, 0);
 
-    // Month << [month] >>
+    // Spacer
+    GtkWidget *sp1 = gtk_label_new(" ");
+    gtk_box_pack_start(GTK_BOX(heat_hdr), sp1, FALSE, FALSE, 0);
+
+    // Month group: same structure
+    GtkWidget *mo_eb = gtk_event_box_new();
+    gtk_widget_modify_bg(mo_eb, GTK_STATE_NORMAL, &ebg);
+
+    GtkWidget *mo_hbox = gtk_hbox_new(FALSE, 0);
     GtkWidget *mo_prev = gtk_button_new();
     GtkWidget *mo_prev_lbl = gtk_label_new(NULL);
-    gtk_label_set_markup(GTK_LABEL(mo_prev_lbl), "<span size='9000'>&lt;&lt;</span>");
+    gtk_label_set_markup(GTK_LABEL(mo_prev_lbl), "<span size='10000'>&lt;&lt;</span>");
     gtk_container_add(GTK_CONTAINER(mo_prev), mo_prev_lbl);
     g_signal_connect(mo_prev, "clicked", G_CALLBACK(on_heat_month_prev), NULL);
-    gtk_box_pack_start(GTK_BOX(heat_hdr), mo_prev, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(mo_hbox), mo_prev, FALSE, FALSE, 0);
 
     g_heat_month_lbl = gtk_label_new(NULL);
-    gtk_widget_set_size_request(g_heat_month_lbl, 50, -1);
+    gtk_widget_set_size_request(g_heat_month_lbl, 60, -1);
     gtk_misc_set_alignment(GTK_MISC(g_heat_month_lbl), 0.5, 0.5);
-    gtk_box_pack_start(GTK_BOX(heat_hdr), g_heat_month_lbl, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(mo_hbox), g_heat_month_lbl, FALSE, FALSE, 0);
 
     GtkWidget *mo_next = gtk_button_new();
     GtkWidget *mo_next_lbl = gtk_label_new(NULL);
-    gtk_label_set_markup(GTK_LABEL(mo_next_lbl), "<span size='9000'>&gt;&gt;</span>");
+    gtk_label_set_markup(GTK_LABEL(mo_next_lbl), "<span size='10000'>&gt;&gt;</span>");
     gtk_container_add(GTK_CONTAINER(mo_next), mo_next_lbl);
     g_signal_connect(mo_next, "clicked", G_CALLBACK(on_heat_month_next), NULL);
-    gtk_box_pack_start(GTK_BOX(heat_hdr), mo_next, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(mo_hbox), mo_next, FALSE, FALSE, 0);
+
+    gtk_container_add(GTK_CONTAINER(mo_eb), mo_hbox);
+    gtk_box_pack_start(GTK_BOX(heat_hdr), mo_eb, FALSE, FALSE, 0);
 
     gtk_box_pack_start(GTK_BOX(heat_vbox), heat_hdr, FALSE, FALSE, 0);
 
     // Content: left chart + right stats
-    GtkWidget *heat_content = gtk_hbox_new(FALSE, 8);
+    GtkWidget *heat_content = gtk_hbox_new(FALSE, 6);
     gtk_box_pack_start(GTK_BOX(heat_vbox), heat_content, TRUE, TRUE, 0);
 
-    // Left: heatmap drawing area
+    // Left: heatmap drawing area (capped at ~70% width via size_request)
     g_heat_drawing_area = gtk_drawing_area_new();
-    gtk_widget_set_size_request(g_heat_drawing_area, -1, 120);
+    gtk_widget_set_size_request(g_heat_drawing_area, 600, 120);
     g_signal_connect(g_heat_drawing_area, "expose-event", G_CALLBACK(on_expose_heatmap_monthly), NULL);
     gtk_box_pack_start(GTK_BOX(heat_content), g_heat_drawing_area, TRUE, TRUE, 0);
 
-    // Right: compact stats text (4 items, smaller font)
+    // Right: compact stats text (4 items, smaller font, wider)
     g_heat_stats_label = gtk_label_new(NULL);
     gtk_misc_set_alignment(GTK_MISC(g_heat_stats_label), 0.0, 0.0);
-    gtk_widget_set_size_request(g_heat_stats_label, 150, -1);
+    gtk_widget_set_size_request(g_heat_stats_label, 180, -1);
     gtk_box_pack_start(GTK_BOX(heat_content), g_heat_stats_label, FALSE, FALSE, 0);
 
     // Apply initial state
@@ -368,14 +384,14 @@ GtkWidget* create_dashboard_page() {
     gtk_box_pack_start(GTK_BOX(gold_hdr), gold_title_lbl, TRUE, TRUE, 0);
 
     GtkWidget *gold_sub_lbl = gtk_label_new(NULL);
-    gtk_label_set_markup(GTK_LABEL(gold_sub_lbl), "<span size='10000' color='#505050'>最常在 18:00 - 21:00 分布</span>");
+    gtk_label_set_markup(GTK_LABEL(gold_sub_lbl), "<span size='10000' color='#505050'>最常在 18:00 - 21:00</span>");
     gtk_misc_set_alignment(GTK_MISC(gold_sub_lbl), 1.0, 0.5);
     gtk_box_pack_end(GTK_BOX(gold_hdr), gold_sub_lbl, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(gold_vbox), gold_hdr, FALSE, FALSE, 0);
 
-    // Bar chart (taller now, ~140px)
+    // Bar chart (taller now, ~160px to give bars more vertical room)
     GtkWidget *bar24_da = gtk_drawing_area_new();
-    gtk_widget_set_size_request(bar24_da, -1, 140);
+    gtk_widget_set_size_request(bar24_da, -1, 160);
     g_signal_connect(bar24_da, "expose-event", G_CALLBACK(on_expose_bar24), NULL);
     gtk_box_pack_start(GTK_BOX(gold_vbox), bar24_da, TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(vbox), gold_eb, FALSE, FALSE, 0);
@@ -399,9 +415,9 @@ GtkWidget* create_dashboard_page() {
     gtk_misc_set_alignment(GTK_MISC(hbar_title_lbl), 0.0, 0.5);
     gtk_box_pack_start(GTK_BOX(hbar_vbox), hbar_title_lbl, FALSE, FALSE, 0);
 
-    // hbar drawing area
+    // hbar drawing area (taller for more spacing between rows)
     GtkWidget *hbar_da = gtk_drawing_area_new();
-    gtk_widget_set_size_request(hbar_da, -1, 140);
+    gtk_widget_set_size_request(hbar_da, -1, 180);
     g_signal_connect(hbar_da, "expose-event", G_CALLBACK(on_expose_hbar), NULL);
     gtk_box_pack_start(GTK_BOX(hbar_vbox), hbar_da, TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(vbox), hbar_eb, FALSE, FALSE, 0);
