@@ -7,7 +7,7 @@ project('kindlestats_app', 'cpp',
 gtk_dep = dependency('gtk+-2.0')
 
 executable('kindlestats_app',
-  'main.cpp', 'ui_dashboard.cpp', 'ui_books.cpp', 'ui_history.cpp', 'utils.cpp',
+  'main.cpp',
   dependencies: [gtk_dep],
   cpp_args: '-static-libstdc++',
   link_args: ['-static-libstdc++', '-pthread'],
