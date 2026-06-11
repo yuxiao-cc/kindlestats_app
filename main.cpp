@@ -6,6 +6,23 @@
 #include "ui_history.h"
 
 GtkWidget *main_window;
+GtkWidget *dashboard_page;
+GtkWidget *books_page;
+GtkWidget *history_page;
+
+static void on_tab_clicked(GtkWidget *widget, gpointer data) {
+    int tab_index = GPOINTER_TO_INT(data);
+    
+    gtk_widget_hide(dashboard_page);
+    gtk_widget_hide(books_page);
+    gtk_widget_hide(history_page);
+    
+    if (tab_index == 1) gtk_widget_show(dashboard_page);
+    else if (tab_index == 2) gtk_widget_show(books_page);
+    else if (tab_index == 3) gtk_widget_show(history_page);
+    
+    force_eink_refresh();
+}
 
 int main(int argc, char *argv[]) {
     gtk_init(&argc, &argv);
@@ -17,7 +34,7 @@ int main(int argc, char *argv[]) {
     g_signal_connect(main_window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
 
     GdkColor bg_color;
-    gdk_color_parse("#ffffff", &bg_color); // 纯白底色
+    gdk_color_parse("#f5f4ef", &bg_color); // Revert to old background color to be 100% safe
     gtk_widget_modify_bg(main_window, GTK_STATE_NORMAL, &bg_color);
 
     GtkWidget *main_vbox = gtk_vbox_new(FALSE, 10);
@@ -39,33 +56,51 @@ int main(int argc, char *argv[]) {
     gtk_box_pack_end(GTK_BOX(header_hbox), exit_btn, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(main_vbox), header_hbox, FALSE, FALSE, 0);
 
-    // Notebook for Tabs
-    GtkWidget *notebook = gtk_notebook_new();
-    gtk_notebook_set_show_border(GTK_NOTEBOOK(notebook), FALSE);
-    gtk_notebook_set_tab_pos(GTK_NOTEBOOK(notebook), GTK_POS_TOP);
-    gtk_box_pack_start(GTK_BOX(main_vbox), notebook, TRUE, TRUE, 0);
-
-    // Page 1: Dashboard
-    GtkWidget *dashboard_page = create_dashboard_page();
-    GtkWidget *lbl1 = gtk_label_new("<span size='14000' weight='bold'> 数据概览 </span>");
+    // Old-school Tab HBox
+    GtkWidget *tab_hbox = gtk_hbox_new(TRUE, 10);
+    
+    GtkWidget *tab1 = gtk_button_new();
+    GtkWidget *lbl1 = gtk_label_new("<span size='16000'>数据概览</span>");
     gtk_label_set_use_markup(GTK_LABEL(lbl1), TRUE);
-    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), dashboard_page, lbl1);
-
-    // Page 2: My Books
-    GtkWidget *books_page = create_books_page();
-    GtkWidget *lbl2 = gtk_label_new("<span size='14000' weight='bold'> 我的书籍 </span>");
+    gtk_container_add(GTK_CONTAINER(tab1), lbl1);
+    g_signal_connect(tab1, "clicked", G_CALLBACK(on_tab_clicked), GINT_TO_POINTER(1));
+    
+    GtkWidget *tab2 = gtk_button_new();
+    GtkWidget *lbl2 = gtk_label_new("<span size='16000'>我的书籍</span>");
     gtk_label_set_use_markup(GTK_LABEL(lbl2), TRUE);
-    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), books_page, lbl2);
-
-    // Page 3: Today's Reading History
-    GtkWidget *history_page = create_history_page();
-    GtkWidget *lbl3 = gtk_label_new("<span size='14000' weight='bold'> 今日阅读 </span>");
+    gtk_container_add(GTK_CONTAINER(tab2), lbl2);
+    g_signal_connect(tab2, "clicked", G_CALLBACK(on_tab_clicked), GINT_TO_POINTER(2));
+    
+    GtkWidget *tab3 = gtk_button_new();
+    GtkWidget *lbl3 = gtk_label_new("<span size='16000'>今日阅读</span>");
     gtk_label_set_use_markup(GTK_LABEL(lbl3), TRUE);
-    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), history_page, lbl3);
+    gtk_container_add(GTK_CONTAINER(tab3), lbl3);
+    g_signal_connect(tab3, "clicked", G_CALLBACK(on_tab_clicked), GINT_TO_POINTER(3));
+    
+    gtk_box_pack_start(GTK_BOX(tab_hbox), tab1, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(tab_hbox), tab2, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(tab_hbox), tab3, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(main_vbox), tab_hbox, FALSE, FALSE, 10);
+
+    // Container for Pages
+    GtkWidget *content_vbox = gtk_vbox_new(FALSE, 16);
+    gtk_box_pack_start(GTK_BOX(main_vbox), content_vbox, TRUE, TRUE, 0);
+
+    dashboard_page = create_dashboard_page();
+    books_page = create_books_page();
+    history_page = create_history_page();
+    
+    gtk_box_pack_start(GTK_BOX(content_vbox), dashboard_page, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(content_vbox), books_page, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(content_vbox), history_page, TRUE, TRUE, 0);
 
     gtk_widget_show_all(main_window);
     
-    // 不再使用 eips -c 暴力清屏，依赖 Kindle XDamage 局部刷新
+    // Hide pages except dashboard initially
+    gtk_widget_hide(books_page);
+    gtk_widget_hide(history_page);
+    
+    system("eips -c"); // Initial clear is fine now that we're explicitly triggering refresh on tab clicks
     gtk_main();
     return 0;
 }

@@ -88,7 +88,7 @@ static void show_monthly_dialog(int month) {
     GtkWidget *frame = gtk_frame_new(NULL);
     gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_OUT);
     
-    GtkWidget *content_area = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+    GtkWidget *content_area = GTK_DIALOG(dialog)->vbox;
     gtk_container_add(GTK_CONTAINER(content_area), frame);
     
     GtkWidget *main_vbox = gtk_vbox_new(FALSE, 10);

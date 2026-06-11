@@ -8,11 +8,18 @@ void force_eink_refresh() {
 }
 
 GtkWidget* create_chart_card(const char* title, const char* subtitle, GtkWidget** content_area) {
-    GtkWidget *vbox = gtk_vbox_new(FALSE, 6);
-    gtk_container_set_border_width(GTK_CONTAINER(vbox), 4);
+    GtkWidget *event_box = gtk_event_box_new();
+    GdkColor white;
+    gdk_color_parse("#ffffff", &white);
+    gtk_widget_modify_bg(event_box, GTK_STATE_NORMAL, &white);
     
-    GtkWidget *separator = gtk_hseparator_new();
-    gtk_box_pack_start(GTK_BOX(vbox), separator, FALSE, FALSE, 4);
+    GtkWidget *frame = gtk_frame_new(NULL);
+    gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_OUT);
+    gtk_container_add(GTK_CONTAINER(event_box), frame);
+
+    GtkWidget *vbox = gtk_vbox_new(FALSE, 6);
+    gtk_container_set_border_width(GTK_CONTAINER(vbox), 8);
+    gtk_container_add(GTK_CONTAINER(frame), vbox);
     
     GtkWidget *header_hbox = gtk_hbox_new(FALSE, 10);
     GtkWidget *title_vbox = gtk_vbox_new(FALSE, 2);
@@ -37,5 +44,5 @@ GtkWidget* create_chart_card(const char* title, const char* subtitle, GtkWidget*
     *content_area = gtk_vbox_new(FALSE, 0);
     gtk_box_pack_start(GTK_BOX(vbox), *content_area, TRUE, TRUE, 0);
     
-    return vbox;
+    return event_box;
 }
