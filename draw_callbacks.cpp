@@ -128,7 +128,7 @@ gboolean on_expose_hbar(GtkWidget *widget, GdkEventExpose *event, gpointer data)
 
 gboolean on_expose_cover(GtkWidget *widget, GdkEventExpose *event, gpointer data) {
     int idx = GPOINTER_TO_INT(data);
-    if (idx < 0 || idx >= (int)g_books.size()) return FALSE;
+    if (idx < 0 || idx >= NUM_BOOKS) return FALSE;
     cairo_t *cr = gdk_cairo_create(widget->window);
 
     // Background
@@ -215,19 +215,19 @@ gboolean on_expose_tl_dot(GtkWidget *widget, GdkEventExpose *event, gpointer dat
     } else if (is_page_first_no_top) {
         // First item on non-first page: only line down
         cairo_move_to(cr, cx, cy);
-        cairo_line_to(cr, cx, h + 120);
+        cairo_line_to(cr, cx, h + 80);
     } else if (is_global_first) {
         // Global first: line from center to bottom
         cairo_move_to(cr, cx, cy);
-        cairo_line_to(cr, cx, h + 120);
+        cairo_line_to(cr, cx, h + 80);
     } else if (is_last) {
         // Last: line from top to center
-        cairo_move_to(cr, cx, -120);
+        cairo_move_to(cr, cx, -80);
         cairo_line_to(cr, cx, cy);
     } else {
         // Middle: line through entire height
-        cairo_move_to(cr, cx, -120);
-        cairo_line_to(cr, cx, h + 120);
+        cairo_move_to(cr, cx, -80);
+        cairo_line_to(cr, cx, h + 80);
     }
     cairo_stroke(cr);
     
@@ -373,7 +373,7 @@ gboolean on_expose_mini_trend(GtkWidget *widget, GdkEventExpose *event, gpointer
 gboolean on_expose_pie(GtkWidget *widget, GdkEventExpose *event, gpointer data) {
     int *pidx = (int*)data;
     int idx = *pidx;
-    if (idx < 0 || idx >= (int)g_books.size()) return FALSE;
+    if (idx < 0 || idx >= NUM_BOOKS) return FALSE;
 
     cairo_t *cr = gdk_cairo_create(widget->window);
     cairo_set_source_rgb(cr, 1, 1, 1);

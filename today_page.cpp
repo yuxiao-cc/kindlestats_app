@@ -35,13 +35,13 @@ static GtkWidget* create_timeline_row(int global_idx, int idx, int count, Sessio
 
     // Time + duration
     GtkWidget *hdr = gtk_hbox_new(FALSE, 8);
-    sprintf(m, "<span size='10000' weight='bold'>%s</span>", sess->time);
+    sprintf(m, "<span size='12000' weight='bold'>%s</span>", sess->time);
     GtkWidget *lbl_t = gtk_label_new(NULL);
     gtk_label_set_markup(GTK_LABEL(lbl_t), m);
     gtk_misc_set_alignment(GTK_MISC(lbl_t), 0.0, 0.5);
     gtk_box_pack_start(GTK_BOX(hdr), lbl_t, FALSE, FALSE, 0);
 
-    sprintf(m, "<span size='9000' color='#505050'>读了 %s</span>", sess->duration);
+    sprintf(m, "<span size='11000' color='#505050'>读了 %s</span>", sess->duration);
     GtkWidget *lbl_d = gtk_label_new(NULL);
     gtk_label_set_markup(GTK_LABEL(lbl_d), m);
     gtk_misc_set_alignment(GTK_MISC(lbl_d), 1.0, 0.5);
@@ -49,7 +49,7 @@ static GtkWidget* create_timeline_row(int global_idx, int idx, int count, Sessio
     gtk_box_pack_start(GTK_BOX(vbox), hdr, FALSE, FALSE, 0);
 
     // Book
-    sprintf(m, "<span size='12000' weight='bold'>《%s》</span>", sess->book);
+    sprintf(m, "<span size='14000' weight='bold'>《%s》</span>", sess->book);
     GtkWidget *lbl_b = gtk_label_new(NULL);
     gtk_label_set_markup(GTK_LABEL(lbl_b), m);
     gtk_misc_set_alignment(GTK_MISC(lbl_b), 0.0, 0.5);

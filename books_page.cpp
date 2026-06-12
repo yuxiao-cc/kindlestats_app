@@ -6,39 +6,6 @@
 #include <stdlib.h>
 #include <string>
 
-static GdkPixbuf* load_thumbnail(const char* kindle_path) {
-    if (!kindle_path) return NULL;
-    char win_path[512];
-    if (strncmp(kindle_path, "/mnt/us/", 8) == 0) {
-        sprintf(win_path, "E:\\%s", kindle_path + 8);
-    } else {
-        strcpy(win_path, kindle_path);
-    }
-    for (char* p = win_path; *p; p++) if (*p == '/') *p = '\\';
-    if (!g_file_test(win_path, G_FILE_TEST_EXISTS)) return NULL;
-    return gdk_pixbuf_new_from_file_at_scale(win_path, 48, 64, FALSE, NULL);
-}
-
-static gboolean on_expose_cover_with_image(GtkWidget *widget, GdkEventExpose *event, gpointer data) {
-    GdkPixbuf *pixbuf = (GdkPixbuf*)data;
-    cairo_t *cr = gdk_cairo_create(widget->window);
-    if (pixbuf) {
-        cairo_set_source_rgb(cr, 1, 1, 1);
-        cairo_paint(cr);
-        gdk_cairo_set_source_pixbuf(cr, pixbuf, 0, 0);
-        cairo_paint(cr);
-    } else {
-        cairo_set_source_rgb(cr, 0.88, 0.88, 0.88);
-        cairo_paint(cr);
-        cairo_set_source_rgb(cr, 0, 0, 0);
-        cairo_set_line_width(cr, 2);
-        cairo_rectangle(cr, 1, 1, widget->allocation.width - 2, widget->allocation.height - 2);
-        cairo_stroke(cr);
-    }
-    cairo_destroy(cr);
-    return FALSE;
-}
-
 // Forward decl for lambda callback
 static void on_book_row_clicked(GtkWidget *w, GdkEventButton *e, gpointer d) {
     if (e->type == GDK_BUTTON_PRESS) {
@@ -71,20 +38,14 @@ static GtkWidget* create_book_row(int book_idx) {
     gdk_color_parse("#ffffff", &white);
     gtk_widget_modify_bg(eb, GTK_STATE_NORMAL, &white);
 
-    GtkWidget *hbox = gtk_hbox_new(FALSE, 10);
+    GtkWidget *hbox = gtk_hbox_new(FALSE, 12);
     gtk_container_set_border_width(GTK_CONTAINER(hbox), 6);
     gtk_container_add(GTK_CONTAINER(eb), hbox);
 
-    // Cover with real image
-    GdkPixbuf *pixbuf = load_thumbnail(g_books[book_idx].thumbnail_path);
+    // Cover
     GtkWidget *cover_da = gtk_drawing_area_new();
     gtk_widget_set_size_request(cover_da, 48, 64);
-    if (pixbuf) {
-        g_signal_connect_data(cover_da, "expose-event", G_CALLBACK(on_expose_cover_with_image),
-                              pixbuf, (GClosureNotify)g_object_unref, (GConnectFlags)0);
-    } else {
-        g_signal_connect(cover_da, "expose-event", G_CALLBACK(on_expose_cover), GINT_TO_POINTER(book_idx));
-    }
+    g_signal_connect(cover_da, "expose-event", G_CALLBACK(on_expose_cover), GINT_TO_POINTER(book_idx));
     gtk_box_pack_start(GTK_BOX(hbox), cover_da, FALSE, FALSE, 0);
 
     // Info column
@@ -92,42 +53,42 @@ static GtkWidget* create_book_row(int book_idx) {
 
     // Title + author line
     char m1[512];
-    sprintf(m1, "<span size='13000' weight='bold'>%s</span>  <span size='10000' color='#505050'>%s</span>",
+    sprintf(m1, "<span size='17000' weight='bold'>%s</span>  <span size='13000' color='#505050'>%s</span>",
             g_books[book_idx].title, g_books[book_idx].author);
     GtkWidget *lbl_ta = gtk_label_new(NULL);
     gtk_label_set_markup(GTK_LABEL(lbl_ta), m1);
     gtk_misc_set_alignment(GTK_MISC(lbl_ta), 0.0, 0.5);
     gtk_box_pack_start(GTK_BOX(vbox), lbl_ta, FALSE, FALSE, 0);
 
-    // Progress row - long and thin
-    GtkWidget *pbox = gtk_hbox_new(FALSE, 4);
+    // Time
+    char m2[256];
+    int h = g_books[book_idx].timeMin / 60;
+    int m = g_books[book_idx].timeMin % 60;
+    sprintf(m2, "<span size='13000'>阅读时长: %d小时%d分 · 最后阅读: %s</span>",
+            h, m, g_books[book_idx].lastRead);
+    GtkWidget *lbl_t = gtk_label_new(NULL);
+    gtk_label_set_markup(GTK_LABEL(lbl_t), m2);
+    gtk_misc_set_alignment(GTK_MISC(lbl_t), 0.0, 0.5);
+    gtk_box_pack_start(GTK_BOX(vbox), lbl_t, FALSE, FALSE, 0);
+
+    // Progress row
+    GtkWidget *pbox = gtk_hbox_new(FALSE, 8);
     GtkWidget *prog_da = gtk_drawing_area_new();
-    gtk_widget_set_size_request(prog_da, 220, 8);
+    gtk_widget_set_size_request(prog_da, 200, 10);
     double *pval = (double*)g_malloc(sizeof(double));
     *pval = g_books[book_idx].progress / 100.0;
     g_signal_connect_data(prog_da, "expose-event", G_CALLBACK(on_expose_progress),
                           pval, (GClosureNotify)destroy_double_ptr, (GConnectFlags)0);
-    gtk_box_pack_start(GTK_BOX(pbox), prog_da, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(pbox), prog_da, FALSE, FALSE, 0);
 
     char m3[64];
-    sprintf(m3, "<span size='10000' weight='bold'>%d%%</span>", g_books[book_idx].progress);
+    sprintf(m3, "<span size='13000' weight='bold'>%d%%</span>", g_books[book_idx].progress);
     GtkWidget *lbl_pct = gtk_label_new(NULL);
     gtk_label_set_markup(GTK_LABEL(lbl_pct), m3);
     gtk_box_pack_start(GTK_BOX(pbox), lbl_pct, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(vbox), pbox, FALSE, FALSE, 0);
 
     gtk_box_pack_start(GTK_BOX(hbox), vbox, TRUE, TRUE, 0);
-
-    // Time on right
-    char m2[64];
-    int h = g_books[book_idx].timeMin / 60;
-    int m = g_books[book_idx].timeMin % 60;
-    sprintf(m2, "<span size='9000' weight='bold'>%d时%d分</span>", h, m);
-    GtkWidget *lbl_t = gtk_label_new(NULL);
-    gtk_label_set_markup(GTK_LABEL(lbl_t), m2);
-    gtk_misc_set_alignment(GTK_MISC(lbl_t), 1.0, 0.5);
-    gtk_widget_set_size_request(lbl_t, 84, -1);
-    gtk_box_pack_end(GTK_BOX(hbox), lbl_t, FALSE, FALSE, 0);
 
     // Click → show detail
     g_signal_connect(eb, "button-press-event", G_CALLBACK(on_book_row_clicked), GINT_TO_POINTER(book_idx));
@@ -154,9 +115,9 @@ void rebuild_book_list() {
     g_list_free(children);
 
     // Build index array
-    int indices[256];
+    int indices[NUM_BOOKS];
     int n = 0;
-    for (int i = 0; i < (int)g_books.size(); i++) {
+    for (int i = 0; i < NUM_BOOKS; i++) {
         if (g_filter_unfinished && g_books[i].finished) continue;
         indices[n++] = i;
     }
@@ -217,7 +178,7 @@ static void on_next_page(GtkButton *btn, gpointer data) {
 
 // Detail page
 void update_book_detail_content(int idx) {
-    if (!g_books_detail_container || idx < 0 || idx >= (int)g_books.size()) return;
+    if (!g_books_detail_container || idx < 0 || idx >= NUM_BOOKS) return;
 
     GList *children = gtk_container_get_children(GTK_CONTAINER(g_books_detail_container));
     for (GList *l = children; l; l = l->next) gtk_widget_destroy(GTK_WIDGET(l->data));
@@ -254,7 +215,7 @@ void update_book_detail_content(int idx) {
     // Progress
     GtkWidget *pbox = gtk_hbox_new(FALSE, 8);
     GtkWidget *prog_da = gtk_drawing_area_new();
-    gtk_widget_set_size_request(prog_da, 220, 10);
+    gtk_widget_set_size_request(prog_da, 250, 12);
     double *pval = (double*)g_malloc(sizeof(double));
     *pval = g_books[idx].progress / 100.0;
     g_signal_connect_data(prog_da, "expose-event", G_CALLBACK(on_expose_progress),
@@ -355,13 +316,9 @@ GtkWidget* create_books_page() {
     g_signal_connect(filter_btn, "toggled", G_CALLBACK(on_filter_toggled), NULL);
     gtk_box_pack_start(GTK_BOX(ctrl), filter_btn, FALSE, FALSE, 0);
 
-    // Spacer
-    GtkWidget *spacer = gtk_label_new("");
-    gtk_box_pack_start(GTK_BOX(ctrl), spacer, TRUE, TRUE, 0);
-
     GtkWidget *sort_lbl = gtk_label_new(NULL);
-    gtk_label_set_markup(GTK_LABEL(sort_lbl), "<span size='11000'>排序:</span>");
-    gtk_box_pack_end(GTK_BOX(ctrl), sort_lbl, FALSE, FALSE, 0);
+    gtk_label_set_markup(GTK_LABEL(sort_lbl), "<span size='14000' weight='bold'>排序:</span>");
+    gtk_box_pack_start(GTK_BOX(ctrl), sort_lbl, FALSE, FALSE, 0);
 
     GtkWidget *s0 = gtk_button_new_with_label("进度");
     GtkWidget *s1 = gtk_button_new_with_label("时长");
@@ -369,13 +326,9 @@ GtkWidget* create_books_page() {
     g_signal_connect(s0, "clicked", G_CALLBACK(on_sort_clicked), GINT_TO_POINTER(0));
     g_signal_connect(s1, "clicked", G_CALLBACK(on_sort_clicked), GINT_TO_POINTER(1));
     g_signal_connect(s2, "clicked", G_CALLBACK(on_sort_clicked), GINT_TO_POINTER(2));
-    gtk_box_pack_end(GTK_BOX(ctrl), s2, FALSE, FALSE, 0);
-    gtk_box_pack_end(GTK_BOX(ctrl), s1, FALSE, FALSE, 0);
-    gtk_box_pack_end(GTK_BOX(ctrl), s0, FALSE, FALSE, 0);
-    gtk_box_reorder_child(GTK_BOX(ctrl), sort_lbl, 1);
-    gtk_box_reorder_child(GTK_BOX(ctrl), s0, 2);
-    gtk_box_reorder_child(GTK_BOX(ctrl), s1, 3);
-    gtk_box_reorder_child(GTK_BOX(ctrl), s2, 4);
+    gtk_box_pack_start(GTK_BOX(ctrl), s0, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(ctrl), s1, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(ctrl), s2, FALSE, FALSE, 0);
 
     gtk_box_pack_start(GTK_BOX(page_vbox), ctrl, FALSE, FALSE, 0);
 
