@@ -15,6 +15,7 @@ static GdkPixbuf* load_thumbnail(const char* kindle_path) {
         strcpy(win_path, kindle_path);
     }
     for (char* p = win_path; *p; p++) if (*p == '/') *p = '\\';
+    if (!g_file_test(win_path, G_FILE_TEST_EXISTS)) return NULL;
     return gdk_pixbuf_new_from_file_at_scale(win_path, 48, 64, FALSE, NULL);
 }
 
@@ -22,6 +23,8 @@ static gboolean on_expose_cover_with_image(GtkWidget *widget, GdkEventExpose *ev
     GdkPixbuf *pixbuf = (GdkPixbuf*)data;
     cairo_t *cr = gdk_cairo_create(widget->window);
     if (pixbuf) {
+        cairo_set_source_rgb(cr, 1, 1, 1);
+        cairo_paint(cr);
         gdk_cairo_set_source_pixbuf(cr, pixbuf, 0, 0);
         cairo_paint(cr);
     } else {
@@ -77,8 +80,8 @@ static GtkWidget* create_book_row(int book_idx) {
     GtkWidget *cover_da = gtk_drawing_area_new();
     gtk_widget_set_size_request(cover_da, 48, 64);
     if (pixbuf) {
-        g_signal_connect(cover_da, "expose-event", G_CALLBACK(on_expose_cover_with_image), pixbuf);
-        g_object_unref(pixbuf);
+        g_signal_connect_data(cover_da, "expose-event", G_CALLBACK(on_expose_cover_with_image),
+                              pixbuf, (GClosureNotify)g_object_unref, (GConnectFlags)0);
     } else {
         g_signal_connect(cover_da, "expose-event", G_CALLBACK(on_expose_cover), GINT_TO_POINTER(book_idx));
     }
@@ -99,7 +102,7 @@ static GtkWidget* create_book_row(int book_idx) {
     // Progress row - long and thin
     GtkWidget *pbox = gtk_hbox_new(FALSE, 4);
     GtkWidget *prog_da = gtk_drawing_area_new();
-    gtk_widget_set_size_request(prog_da, 300, 6);
+    gtk_widget_set_size_request(prog_da, 220, 8);
     double *pval = (double*)g_malloc(sizeof(double));
     *pval = g_books[book_idx].progress / 100.0;
     g_signal_connect_data(prog_da, "expose-event", G_CALLBACK(on_expose_progress),
@@ -123,6 +126,7 @@ static GtkWidget* create_book_row(int book_idx) {
     GtkWidget *lbl_t = gtk_label_new(NULL);
     gtk_label_set_markup(GTK_LABEL(lbl_t), m2);
     gtk_misc_set_alignment(GTK_MISC(lbl_t), 1.0, 0.5);
+    gtk_widget_set_size_request(lbl_t, 84, -1);
     gtk_box_pack_end(GTK_BOX(hbox), lbl_t, FALSE, FALSE, 0);
 
     // Click → show detail
@@ -150,9 +154,9 @@ void rebuild_book_list() {
     g_list_free(children);
 
     // Build index array
-    int indices[NUM_BOOKS];
+    int indices[256];
     int n = 0;
-    for (int i = 0; i < NUM_BOOKS; i++) {
+    for (int i = 0; i < (int)g_books.size(); i++) {
         if (g_filter_unfinished && g_books[i].finished) continue;
         indices[n++] = i;
     }
@@ -213,7 +217,7 @@ static void on_next_page(GtkButton *btn, gpointer data) {
 
 // Detail page
 void update_book_detail_content(int idx) {
-    if (!g_books_detail_container || idx < 0 || idx >= NUM_BOOKS) return;
+    if (!g_books_detail_container || idx < 0 || idx >= (int)g_books.size()) return;
 
     GList *children = gtk_container_get_children(GTK_CONTAINER(g_books_detail_container));
     for (GList *l = children; l; l = l->next) gtk_widget_destroy(GTK_WIDGET(l->data));
@@ -250,7 +254,7 @@ void update_book_detail_content(int idx) {
     // Progress
     GtkWidget *pbox = gtk_hbox_new(FALSE, 8);
     GtkWidget *prog_da = gtk_drawing_area_new();
-    gtk_widget_set_size_request(prog_da, 250, 12);
+    gtk_widget_set_size_request(prog_da, 220, 10);
     double *pval = (double*)g_malloc(sizeof(double));
     *pval = g_books[idx].progress / 100.0;
     g_signal_connect_data(prog_da, "expose-event", G_CALLBACK(on_expose_progress),
@@ -368,6 +372,10 @@ GtkWidget* create_books_page() {
     gtk_box_pack_end(GTK_BOX(ctrl), s2, FALSE, FALSE, 0);
     gtk_box_pack_end(GTK_BOX(ctrl), s1, FALSE, FALSE, 0);
     gtk_box_pack_end(GTK_BOX(ctrl), s0, FALSE, FALSE, 0);
+    gtk_box_reorder_child(GTK_BOX(ctrl), sort_lbl, 1);
+    gtk_box_reorder_child(GTK_BOX(ctrl), s0, 2);
+    gtk_box_reorder_child(GTK_BOX(ctrl), s1, 3);
+    gtk_box_reorder_child(GTK_BOX(ctrl), s2, 4);
 
     gtk_box_pack_start(GTK_BOX(page_vbox), ctrl, FALSE, FALSE, 0);
 
