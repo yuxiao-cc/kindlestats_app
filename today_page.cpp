@@ -21,10 +21,11 @@ static GtkWidget* create_timeline_row(int global_idx, int idx, int count, Sessio
     // Dot + line drawing area (full height of row)
     GtkWidget *dot_da = gtk_drawing_area_new();
     gtk_widget_set_size_request(dot_da, 30, ROW_HEIGHT);
-    // Only global first record gets black dot
-    int is_first = (global_idx == 0) ? 1 : 0;
+    // flags: bit0=is_global_first, bit1=is_last, bit2=not_first_page_first
+    int is_global_first = (global_idx == 0) ? 1 : 0;
     int is_last = (idx == count - 1) ? 1 : 0;
-    int flags = is_first | (is_last << 1);
+    int is_page_first_no_top = (global_idx > 0 && idx == 0) ? 1 : 0;
+    int flags = is_global_first | (is_last << 1) | (is_page_first_no_top << 2);
     g_signal_connect(dot_da, "expose-event", G_CALLBACK(on_expose_tl_dot), GINT_TO_POINTER(flags));
     gtk_box_pack_start(GTK_BOX(hbox), dot_da, FALSE, FALSE, 0);
 

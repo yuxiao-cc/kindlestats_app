@@ -204,23 +204,32 @@ gboolean on_expose_tl_dot(GtkWidget *widget, GdkEventExpose *event, gpointer dat
     double cy = widget->allocation.height / 2.0; // Center of row
     double h = widget->allocation.height;
     
-    // Draw vertical line (with larger overflow for connection)
+    // flags: bit0=is_first(global), bit1=is_last(page), bit2=not_first_page
+    int is_global_first = flags & 1;
+    int is_last = (flags >> 1) & 1;
+    int is_page_first_no_top = (flags >> 2) & 1;
+    
+    // Draw vertical line
     cairo_set_source_rgb(cr, 0, 0, 0);
     cairo_set_line_width(cr, 2);
-    if (is_first && is_last) {
-        // Only one item, no line
-    } else if (is_first) {
-        // First: line from center to bottom (with overflow)
+    if (is_global_first && is_last) {
+        // Only one item total, no line
+    } else if (is_page_first_no_top) {
+        // First item on non-first page: only line down
         cairo_move_to(cr, cx, cy);
-        cairo_line_to(cr, cx, h + 40);
+        cairo_line_to(cr, cx, h + 80);
+    } else if (is_global_first) {
+        // Global first: line from center to bottom
+        cairo_move_to(cr, cx, cy);
+        cairo_line_to(cr, cx, h + 80);
     } else if (is_last) {
-        // Last: line from top (with overflow) to center
-        cairo_move_to(cr, cx, -40);
+        // Last: line from top to center
+        cairo_move_to(cr, cx, -80);
         cairo_line_to(cr, cx, cy);
     } else {
-        // Middle: line through entire height (with overflow)
-        cairo_move_to(cr, cx, -40);
-        cairo_line_to(cr, cx, h + 40);
+        // Middle: line through entire height
+        cairo_move_to(cr, cx, -80);
+        cairo_line_to(cr, cx, h + 80);
     }
     cairo_stroke(cr);
     
