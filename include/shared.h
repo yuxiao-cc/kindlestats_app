@@ -27,11 +27,11 @@ struct SessionData {
     const char *progress;
 };
 
-extern SessionData g_sessions_today[2];
+extern SessionData g_sessions_today[];
 extern const int NUM_SESSIONS_TODAY;
-extern SessionData g_sessions_yesterday[3];
+extern SessionData g_sessions_yesterday[];
 extern const int NUM_SESSIONS_YESTERDAY;
-extern SessionData g_sessions_2days[1];
+extern SessionData g_sessions_2days[];
 extern const int NUM_SESSIONS_2DAYS;
 
 // ==================== Globals ====================
