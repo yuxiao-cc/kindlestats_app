@@ -212,15 +212,15 @@ gboolean on_expose_tl_dot(GtkWidget *widget, GdkEventExpose *event, gpointer dat
     } else if (is_first) {
         // First: line from center to bottom (with overflow)
         cairo_move_to(cr, cx, cy);
-        cairo_line_to(cr, cx, h + 20);
+        cairo_line_to(cr, cx, h + 40);
     } else if (is_last) {
         // Last: line from top (with overflow) to center
-        cairo_move_to(cr, cx, -20);
+        cairo_move_to(cr, cx, -40);
         cairo_line_to(cr, cx, cy);
     } else {
         // Middle: line through entire height (with overflow)
-        cairo_move_to(cr, cx, -20);
-        cairo_line_to(cr, cx, h + 20);
+        cairo_move_to(cr, cx, -40);
+        cairo_line_to(cr, cx, h + 40);
     }
     cairo_stroke(cr);
     

@@ -21,7 +21,7 @@ static GtkWidget* create_timeline_row(int global_idx, int idx, int count, Sessio
     // Dot + line drawing area (full height of row)
     GtkWidget *dot_da = gtk_drawing_area_new();
     gtk_widget_set_size_request(dot_da, 30, ROW_HEIGHT);
-    // Use global_idx to determine if first (black dot)
+    // Only global first record gets black dot
     int is_first = (global_idx == 0) ? 1 : 0;
     int is_last = (idx == count - 1) ? 1 : 0;
     int flags = is_first | (is_last << 1);
