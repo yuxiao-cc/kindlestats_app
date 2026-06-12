@@ -11,6 +11,7 @@ struct BookData {
     const char *title;
     const char *author;
     const char *lastRead;
+    const char *thumbnail_path;
     int timeMin;
     int progress;
     int trend[7];

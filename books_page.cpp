@@ -6,6 +6,36 @@
 #include <stdlib.h>
 #include <string>
 
+static GdkPixbuf* load_thumbnail(const char* kindle_path) {
+    if (!kindle_path) return NULL;
+    char win_path[512];
+    if (strncmp(kindle_path, "/mnt/us/", 8) == 0) {
+        sprintf(win_path, "E:\\%s", kindle_path + 8);
+    } else {
+        strcpy(win_path, kindle_path);
+    }
+    for (char* p = win_path; *p; p++) if (*p == '/') *p = '\\';
+    return gdk_pixbuf_new_from_file_at_scale(win_path, 48, 64, FALSE, NULL);
+}
+
+static gboolean on_expose_cover_with_image(GtkWidget *widget, GdkEventExpose *event, gpointer data) {
+    GdkPixbuf *pixbuf = (GdkPixbuf*)data;
+    cairo_t *cr = gdk_cairo_create(widget->window);
+    if (pixbuf) {
+        gdk_cairo_set_source_pixbuf(cr, pixbuf, 0, 0);
+        cairo_paint(cr);
+    } else {
+        cairo_set_source_rgb(cr, 0.88, 0.88, 0.88);
+        cairo_paint(cr);
+        cairo_set_source_rgb(cr, 0, 0, 0);
+        cairo_set_line_width(cr, 2);
+        cairo_rectangle(cr, 1, 1, widget->allocation.width - 2, widget->allocation.height - 2);
+        cairo_stroke(cr);
+    }
+    cairo_destroy(cr);
+    return FALSE;
+}
+
 // Forward decl for lambda callback
 static void on_book_row_clicked(GtkWidget *w, GdkEventButton *e, gpointer d) {
     if (e->type == GDK_BUTTON_PRESS) {
@@ -38,24 +68,28 @@ static GtkWidget* create_book_row(int book_idx) {
     gdk_color_parse("#ffffff", &white);
     gtk_widget_modify_bg(eb, GTK_STATE_NORMAL, &white);
 
-    GtkWidget *hbox = gtk_hbox_new(FALSE, 12);
+    GtkWidget *hbox = gtk_hbox_new(FALSE, 10);
     gtk_container_set_border_width(GTK_CONTAINER(hbox), 6);
     gtk_container_add(GTK_CONTAINER(eb), hbox);
 
-    // Cover
+    // Cover with real image
+    GdkPixbuf *pixbuf = load_thumbnail(g_books[book_idx].thumbnail_path);
     GtkWidget *cover_da = gtk_drawing_area_new();
     gtk_widget_set_size_request(cover_da, 48, 64);
-    g_signal_connect(cover_da, "expose-event", G_CALLBACK(on_expose_cover), GINT_TO_POINTER(book_idx));
+    if (pixbuf) {
+        g_signal_connect(cover_da, "expose-event", G_CALLBACK(on_expose_cover_with_image), pixbuf);
+        g_object_unref(pixbuf);
+    } else {
+        g_signal_connect(cover_da, "expose-event", G_CALLBACK(on_expose_cover), GINT_TO_POINTER(book_idx));
+    }
     gtk_box_pack_start(GTK_BOX(hbox), cover_da, FALSE, FALSE, 0);
 
     // Info column
-    GtkWidget *vbox = gtk_vbox_new(FALSE, 2);
+    GtkWidget *vbox = gtk_vbox_new(FALSE, 4);
 
-    // Title + author + time line
+    // Title + author line
     char m1[512];
-    int h = g_books[book_idx].timeMin / 60;
-    int m = g_books[book_idx].timeMin % 60;
-    sprintf(m1, "<span size='14000' weight='bold'>%s</span>  <span size='11000' color='#505050'>%s</span>",
+    sprintf(m1, "<span size='13000' weight='bold'>%s</span>  <span size='10000' color='#505050'>%s</span>",
             g_books[book_idx].title, g_books[book_idx].author);
     GtkWidget *lbl_ta = gtk_label_new(NULL);
     gtk_label_set_markup(GTK_LABEL(lbl_ta), m1);
@@ -83,7 +117,9 @@ static GtkWidget* create_book_row(int book_idx) {
 
     // Time on right
     char m2[64];
-    sprintf(m2, "<span size='12000' weight='bold'>%d时%d分</span>", h, m);
+    int h = g_books[book_idx].timeMin / 60;
+    int m = g_books[book_idx].timeMin % 60;
+    sprintf(m2, "<span size='9000' weight='bold'>%d时%d分</span>", h, m);
     GtkWidget *lbl_t = gtk_label_new(NULL);
     gtk_label_set_markup(GTK_LABEL(lbl_t), m2);
     gtk_misc_set_alignment(GTK_MISC(lbl_t), 1.0, 0.5);
