@@ -232,7 +232,7 @@ gboolean on_expose_tl_dot(GtkWidget *widget, GdkEventExpose *event, gpointer dat
     cairo_stroke(cr);
     
     // Draw dot at center
-    if (is_first) cairo_set_source_rgb(cr, 0, 0, 0);
+    if (is_global_first) cairo_set_source_rgb(cr, 0, 0, 0);
     else cairo_set_source_rgb(cr, 1, 1, 1);
     cairo_arc(cr, cx, cy, 8, 0, 2 * G_PI);
     cairo_fill_preserve(cr);
