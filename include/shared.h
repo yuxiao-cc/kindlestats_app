@@ -48,6 +48,9 @@ extern int g_current_book_detail;
 extern int g_today_day_idx;
 extern GtkWidget *g_today_date_label;
 extern GtkWidget *g_today_timeline_container;
+extern GtkWidget *g_today_page_label;
+extern int g_today_page;
+extern const int SESSIONS_PER_PAGE;
 
 // ==================== Utilities ====================
 

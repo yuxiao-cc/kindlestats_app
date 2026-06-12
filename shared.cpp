@@ -20,10 +20,18 @@ BookData g_books[] = {
 const int NUM_BOOKS = 8;
 
 SessionData g_sessions_today[] = {
-    {"20:05 - 20:35", "30 分钟", "三体", "82% → 85% (+3%)"},
-    {"09:30 - 10:15", "45 分钟", "卡拉马佐夫兄弟", "60% → 62% (+2%)"},
+    {"20:05 - 20:35", "30 分钟", "三体", "82% → 85%"},
+    {"09:30 - 10:15", "45 分钟", "卡拉马佐夫兄弟", "60% → 62%"},
+    {"08:00 - 08:45", "45 分钟", "三体", "78% → 82%"},
+    {"07:30 - 08:00", "30 分钟", "百年孤独", "95% → 100%"},
+    {"22:00 - 22:30", "30 分钟", "万历十五年", "90% → 92%"},
+    {"21:30 - 22:00", "30 分钟", "自私的基因", "35% → 38%"},
+    {"15:00 - 15:45", "45 分钟", "人类简史", "70% → 75%"},
+    {"14:00 - 14:30", "30 分钟", "三体II：黑暗森林", "10% → 15%"},
+    {"12:00 - 12:30", "30 分钟", "红楼梦", "5% → 8%"},
+    {"10:30 - 11:00", "30 分钟", "三体", "85% → 87%"},
 };
-const int NUM_SESSIONS_TODAY = 2;
+const int NUM_SESSIONS_TODAY = 10;
 
 SessionData g_sessions_yesterday[] = {
     {"21:00 - 21:50", "50 分钟", "三体", "75% → 80% (+5%)"},
@@ -51,6 +59,9 @@ int g_current_book_detail = -1;
 int g_today_day_idx = 0;
 GtkWidget *g_today_date_label = NULL;
 GtkWidget *g_today_timeline_container = NULL;
+GtkWidget *g_today_page_label = NULL;
+int g_today_page = 0;
+const int SESSIONS_PER_PAGE = 5;
 
 // ==================== Utilities ====================
 
