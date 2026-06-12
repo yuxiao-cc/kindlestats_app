@@ -204,7 +204,7 @@ gboolean on_expose_tl_dot(GtkWidget *widget, GdkEventExpose *event, gpointer dat
     double cy = widget->allocation.height / 2.0; // Center of row
     double h = widget->allocation.height;
     
-    // Draw vertical line (with slight overflow for connection)
+    // Draw vertical line (with larger overflow for connection)
     cairo_set_source_rgb(cr, 0, 0, 0);
     cairo_set_line_width(cr, 2);
     if (is_first && is_last) {
@@ -212,15 +212,15 @@ gboolean on_expose_tl_dot(GtkWidget *widget, GdkEventExpose *event, gpointer dat
     } else if (is_first) {
         // First: line from center to bottom (with overflow)
         cairo_move_to(cr, cx, cy);
-        cairo_line_to(cr, cx, h + 2);
+        cairo_line_to(cr, cx, h + 20);
     } else if (is_last) {
         // Last: line from top (with overflow) to center
-        cairo_move_to(cr, cx, -2);
+        cairo_move_to(cr, cx, -20);
         cairo_line_to(cr, cx, cy);
     } else {
         // Middle: line through entire height (with overflow)
-        cairo_move_to(cr, cx, -2);
-        cairo_line_to(cr, cx, h + 2);
+        cairo_move_to(cr, cx, -20);
+        cairo_line_to(cr, cx, h + 20);
     }
     cairo_stroke(cr);
     

@@ -8,7 +8,7 @@
 #define DOT_RADIUS 8
 
 // Build one timeline row
-static GtkWidget* create_timeline_row(int idx, int count, SessionData* sess) {
+static GtkWidget* create_timeline_row(int global_idx, int idx, int count, SessionData* sess) {
     GtkWidget *eb = gtk_event_box_new();
     GdkColor white;
     gdk_color_parse("#ffffff", &white);
@@ -21,7 +21,10 @@ static GtkWidget* create_timeline_row(int idx, int count, SessionData* sess) {
     // Dot + line drawing area (full height of row)
     GtkWidget *dot_da = gtk_drawing_area_new();
     gtk_widget_set_size_request(dot_da, 30, ROW_HEIGHT);
-    int flags = (idx == 0 ? 1 : 0) | (idx == count - 1 ? 2 : 0);
+    // Use global_idx to determine if first (black dot)
+    int is_first = (global_idx == 0) ? 1 : 0;
+    int is_last = (idx == count - 1) ? 1 : 0;
+    int flags = is_first | (is_last << 1);
     g_signal_connect(dot_da, "expose-event", G_CALLBACK(on_expose_tl_dot), GINT_TO_POINTER(flags));
     gtk_box_pack_start(GTK_BOX(hbox), dot_da, FALSE, FALSE, 0);
 
@@ -59,13 +62,6 @@ static GtkWidget* create_timeline_row(int idx, int count, SessionData* sess) {
     gtk_box_pack_start(GTK_BOX(vbox), lbl_p, FALSE, FALSE, 0);
 
     gtk_box_pack_start(GTK_BOX(hbox), vbox, TRUE, TRUE, 0);
-
-    // Separator
-    GtkWidget *sep = gtk_hseparator_new();
-    GtkWidget *sep_eb = gtk_event_box_new();
-    gtk_widget_modify_bg(sep_eb, GTK_STATE_NORMAL, &white);
-    gtk_container_add(GTK_CONTAINER(sep_eb), sep);
-    gtk_box_pack_start(GTK_BOX(eb), sep_eb, FALSE, FALSE, 0);
 
     return eb;
 }
@@ -108,7 +104,7 @@ void rebuild_timeline() {
 
         for (int i = 0; i < page_count; i++) {
             gtk_box_pack_start(GTK_BOX(g_today_timeline_container),
-                               create_timeline_row(i, page_count, &g_sessions_today[start + i]),
+                               create_timeline_row(start + i, i, page_count, &g_sessions_today[start + i]),
                                FALSE, FALSE, 0);
         }
     }
