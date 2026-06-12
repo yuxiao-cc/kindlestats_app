@@ -5,7 +5,7 @@
 #include <string.h>
 
 // Build one timeline row
-static GtkWidget* create_timeline_row(int idx, SessionData* sess) {
+static GtkWidget* create_timeline_row(int idx, int count, SessionData* sess) {
     GtkWidget *eb = gtk_event_box_new();
     GdkColor white;
     gdk_color_parse("#ffffff", &white);
@@ -18,47 +18,44 @@ static GtkWidget* create_timeline_row(int idx, SessionData* sess) {
     // Dot + line drawing area
     GtkWidget *dot_da = gtk_drawing_area_new();
     gtk_widget_set_size_request(dot_da, 24, 40);
-    g_signal_connect(dot_da, "expose-event", G_CALLBACK(on_expose_tl_dot), GINT_TO_POINTER(idx == 0));
+    int flags = (idx == 0 ? 1 : 0) | (idx == count - 1 ? 2 : 0);
+    g_signal_connect(dot_da, "expose-event", G_CALLBACK(on_expose_tl_dot), GINT_TO_POINTER(flags));
     gtk_box_pack_start(GTK_BOX(hbox), dot_da, FALSE, FALSE, 0);
 
     // Content bubble
     GtkWidget *bubble = gtk_vbox_new(FALSE, 3);
     char m[1024];
 
-    // Header: time + duration
+    // Header: time on left, duration on right
     GtkWidget *hdr = gtk_hbox_new(FALSE, 8);
-    sprintf(m, "<span size='15000' weight='bold'>%s</span>", sess->time);
+    sprintf(m, "<span size='12000' weight='bold'>%s</span>", sess->time);
     GtkWidget *lbl_t = gtk_label_new(NULL);
     gtk_label_set_markup(GTK_LABEL(lbl_t), m);
     gtk_misc_set_alignment(GTK_MISC(lbl_t), 0.0, 0.5);
     gtk_box_pack_start(GTK_BOX(hdr), lbl_t, FALSE, FALSE, 0);
 
-    sprintf(m, "<span size='13000' weight='bold'>读了 %s</span>", sess->duration);
+    sprintf(m, "<span size='11000' weight='bold'>读了 %s</span>", sess->duration);
     GtkWidget *lbl_d = gtk_label_new(NULL);
     gtk_label_set_markup(GTK_LABEL(lbl_d), m);
-    gtk_misc_set_alignment(GTK_MISC(lbl_d), 0.0, 0.5);
-    gtk_box_pack_start(GTK_BOX(hdr), lbl_d, FALSE, FALSE, 0);
+    gtk_misc_set_alignment(GTK_MISC(lbl_d), 1.0, 0.5);
+    gtk_box_pack_end(GTK_BOX(hdr), lbl_d, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(bubble), hdr, FALSE, FALSE, 0);
 
     // Book
-    sprintf(m, "<span size='16000' weight='bold'>《%s》</span>", sess->book);
+    sprintf(m, "<span size='13000' weight='bold'>《%s》</span>", sess->book);
     GtkWidget *lbl_b = gtk_label_new(NULL);
     gtk_label_set_markup(GTK_LABEL(lbl_b), m);
     gtk_misc_set_alignment(GTK_MISC(lbl_b), 0.0, 0.5);
     gtk_box_pack_start(GTK_BOX(bubble), lbl_b, FALSE, FALSE, 0);
 
     // Progress
-    sprintf(m, "<span size='13000' color='#505050'>进度: %s</span>", sess->progress);
+    sprintf(m, "<span size='11000' color='#505050'>进度: %s</span>", sess->progress);
     GtkWidget *lbl_p = gtk_label_new(NULL);
     gtk_label_set_markup(GTK_LABEL(lbl_p), m);
     gtk_misc_set_alignment(GTK_MISC(lbl_p), 0.0, 0.5);
     gtk_box_pack_start(GTK_BOX(bubble), lbl_p, FALSE, FALSE, 0);
 
     gtk_box_pack_start(GTK_BOX(hbox), bubble, TRUE, TRUE, 0);
-
-    // Separator
-    GtkWidget *sep = gtk_hseparator_new();
-    gtk_box_pack_start(GTK_BOX(eb), sep, FALSE, FALSE, 0);
 
     return eb;
 }
@@ -70,7 +67,7 @@ static void update_date_label() {
     else if (g_today_day_idx == 1) text = "昨天 (06月09日)";
     else text = "前天 (06月08日)";
     char m[128];
-    sprintf(m, "<span size='15000' weight='bold'>%s</span>", text);
+    sprintf(m, "<span size='13000' weight='bold'>%s</span>", text);
     gtk_label_set_markup(GTK_LABEL(g_today_date_label), m);
 }
 
@@ -99,7 +96,7 @@ void rebuild_timeline() {
     } else {
         for (int i = 0; i < count; i++) {
             gtk_box_pack_start(GTK_BOX(g_today_timeline_container),
-                               create_timeline_row(i, &sessions[i]), FALSE, FALSE, 2);
+                               create_timeline_row(i, count, &sessions[i]), FALSE, FALSE, 2);
         }
     }
 
@@ -122,8 +119,8 @@ GtkWidget* create_today_page() {
     GtkWidget *hdr = gtk_hbox_new(FALSE, 8);
     gtk_container_set_border_width(GTK_CONTAINER(hdr), 4);
 
-    GtkWidget *prev = gtk_button_new_with_label("[ < 切换前一日 ]");
-    GtkWidget *next = gtk_button_new_with_label("[ 切换后一日 > ]");
+    GtkWidget *prev = gtk_button_new_with_label("<");
+    GtkWidget *next = gtk_button_new_with_label(">");
     g_today_date_label = gtk_label_new(NULL);
     gtk_misc_set_alignment(GTK_MISC(g_today_date_label), 0.5, 0.5);
 
