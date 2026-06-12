@@ -4,10 +4,12 @@
 #include <gtk/gtk.h>
 #include <cairo.h>
 #include <stdbool.h>
+#include <vector>
 
 // ==================== Mock Data ====================
 
 struct BookData {
+    const char *uuid;
     const char *title;
     const char *author;
     const char *lastRead;
@@ -18,8 +20,7 @@ struct BookData {
     bool finished;
 };
 
-extern BookData g_books[];
-extern const int NUM_BOOKS;
+extern std::vector<BookData> g_books;
 
 struct SessionData {
     const char *time;
@@ -56,6 +57,7 @@ extern const int SESSIONS_PER_PAGE;
 // ==================== Utilities ====================
 
 void log_debug(const char* msg);
+void load_book_library();
 int days_in_month(int y, int m);
 int first_weekday_of_month(int y, int m);
 void parse_pango_color(const char* hex, GdkColor *out);

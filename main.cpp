@@ -16,6 +16,7 @@ int main(int argc, char *argv[]) {
     log_debug("=== Starting KindleStats ===");
     gtk_init(&argc, &argv);
     log_debug("gtk_init done");
+    load_book_library();
 
     g_main_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_title(GTK_WINDOW(g_main_window), "L:A_N:application_PC:N_ID:kindlestats");

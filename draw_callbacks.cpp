@@ -128,7 +128,7 @@ gboolean on_expose_hbar(GtkWidget *widget, GdkEventExpose *event, gpointer data)
 
 gboolean on_expose_cover(GtkWidget *widget, GdkEventExpose *event, gpointer data) {
     int idx = GPOINTER_TO_INT(data);
-    if (idx < 0 || idx >= NUM_BOOKS) return FALSE;
+    if (idx < 0 || idx >= (int)g_books.size()) return FALSE;
     cairo_t *cr = gdk_cairo_create(widget->window);
 
     // Background
@@ -373,7 +373,7 @@ gboolean on_expose_mini_trend(GtkWidget *widget, GdkEventExpose *event, gpointer
 gboolean on_expose_pie(GtkWidget *widget, GdkEventExpose *event, gpointer data) {
     int *pidx = (int*)data;
     int idx = *pidx;
-    if (idx < 0 || idx >= NUM_BOOKS) return FALSE;
+    if (idx < 0 || idx >= (int)g_books.size()) return FALSE;
 
     cairo_t *cr = gdk_cairo_create(widget->window);
     cairo_set_source_rgb(cr, 1, 1, 1);
