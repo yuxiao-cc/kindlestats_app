@@ -194,8 +194,6 @@ gboolean on_expose_progress(GtkWidget *widget, GdkEventExpose *event, gpointer d
 
 gboolean on_expose_tl_dot(GtkWidget *widget, GdkEventExpose *event, gpointer data) {
     int flags = GPOINTER_TO_INT(data);
-    int is_first = flags & 1;
-    int is_last = (flags >> 1) & 1;
     cairo_t *cr = gdk_cairo_create(widget->window);
     cairo_set_source_rgb(cr, 1, 1, 1);
     cairo_paint(cr);
@@ -204,7 +202,7 @@ gboolean on_expose_tl_dot(GtkWidget *widget, GdkEventExpose *event, gpointer dat
     double cy = widget->allocation.height / 2.0; // Center of row
     double h = widget->allocation.height;
     
-    // flags: bit0=is_first(global), bit1=is_last(page), bit2=not_first_page
+    // flags: bit0=is_global_first, bit1=is_last(page), bit2=not_first_page_first
     int is_global_first = flags & 1;
     int is_last = (flags >> 1) & 1;
     int is_page_first_no_top = (flags >> 2) & 1;
