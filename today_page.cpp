@@ -4,8 +4,8 @@
 #include <stdio.h>
 #include <string.h>
 
-// Build one timeline row
-static GtkWidget* create_timeline_row(int idx, int count, SessionData* sess) {
+// Build one timeline row (dot only, no line)
+static GtkWidget* create_timeline_row(int idx, SessionData* sess) {
     GtkWidget *eb = gtk_event_box_new();
     GdkColor white;
     gdk_color_parse("#ffffff", &white);
@@ -15,11 +15,10 @@ static GtkWidget* create_timeline_row(int idx, int count, SessionData* sess) {
     gtk_container_set_border_width(GTK_CONTAINER(hbox), 4);
     gtk_container_add(GTK_CONTAINER(eb), hbox);
 
-    // Dot + line drawing area
+    // Dot drawing area
     GtkWidget *dot_da = gtk_drawing_area_new();
     gtk_widget_set_size_request(dot_da, 24, 40);
-    int flags = (idx == 0 ? 1 : 0) | (idx == count - 1 ? 2 : 0);
-    g_signal_connect(dot_da, "expose-event", G_CALLBACK(on_expose_tl_dot), GINT_TO_POINTER(flags));
+    g_signal_connect(dot_da, "expose-event", G_CALLBACK(on_expose_tl_dot), GINT_TO_POINTER(idx == 0 ? 1 : 0));
     gtk_box_pack_start(GTK_BOX(hbox), dot_da, FALSE, FALSE, 0);
 
     // Content bubble
@@ -60,76 +59,87 @@ static GtkWidget* create_timeline_row(int idx, int count, SessionData* sess) {
     return eb;
 }
 
-static void update_date_label() {
-    if (!g_today_date_label) return;
-    const char* text;
-    if (g_today_day_idx == 0) text = "今天 (06月10日)";
-    else if (g_today_day_idx == 1) text = "昨天 (06月09日)";
-    else text = "前天 (06月08日)";
-    char m[128];
-    sprintf(m, "<span size='13000' weight='bold'>%s</span>", text);
-    gtk_label_set_markup(GTK_LABEL(g_today_date_label), m);
+// Timeline background line drawing callback
+typedef struct {
+    int count;
+} TimelineBgData;
+
+static gboolean on_expose_tl_bg(GtkWidget *widget, GdkEventExpose *event, gpointer data) {
+    TimelineBgData *bg = (TimelineBgData*)data;
+    cairo_t *cr = gdk_cairo_create(widget->window);
+    cairo_set_source_rgb(cr, 1, 1, 1);
+    cairo_paint(cr);
+
+    if (bg->count > 1) {
+        double cx = 12.0; // Center of 24px dot area
+        double row_h = 48.0; // 40px dot area + 8px spacing
+        
+        cairo_set_source_rgb(cr, 0, 0, 0);
+        cairo_set_line_width(cr, 2);
+        cairo_move_to(cr, cx, 16); // Start from first dot position
+        cairo_line_to(cr, cx, 16 + (bg->count - 1) * row_h); // To last dot position
+        cairo_stroke(cr);
+    }
+
+    cairo_destroy(cr);
+    return FALSE;
 }
 
 void rebuild_timeline() {
     if (!g_today_timeline_container) return;
-    update_date_label();
 
     // Clear
     GList *children = gtk_container_get_children(GTK_CONTAINER(g_today_timeline_container));
     for (GList *l = children; l; l = l->next) gtk_widget_destroy(GTK_WIDGET(l->data));
     g_list_free(children);
 
-    SessionData* sessions = NULL;
-    int count = 0;
-    if (g_today_day_idx == 0) { sessions = g_sessions_today; count = NUM_SESSIONS_TODAY; }
-    else if (g_today_day_idx == 1) { sessions = g_sessions_yesterday; count = NUM_SESSIONS_YESTERDAY; }
-    else { sessions = g_sessions_2days; count = NUM_SESSIONS_2DAYS; }
+    SessionData* sessions = g_sessions_today;
+    int count = NUM_SESSIONS_TODAY;
 
     if (count == 0) {
         GtkWidget *empty = gtk_label_new(NULL);
         gtk_label_set_markup(GTK_LABEL(empty),
-            "<span size='16000' weight='bold'>该日无阅读记录</span>\n"
-            "<span size='13000' color='#505050'>你可以点击上方切换按钮查看其他有阅读记录的日期。</span>");
+            "<span size='16000' weight='bold'>今日无阅读记录</span>\n"
+            "<span size='13000' color='#505050'>今天还没有阅读记录，快去读书吧！</span>");
         gtk_misc_set_alignment(GTK_MISC(empty), 0.5, 0.5);
         gtk_box_pack_start(GTK_BOX(g_today_timeline_container), empty, TRUE, TRUE, 20);
     } else {
+        // Create overlay container for background line + rows
+        GtkWidget *overlay = gtk_fixed_new();
+        gtk_box_pack_start(GTK_BOX(g_today_timeline_container), overlay, TRUE, TRUE, 0);
+
+        // Background line drawing area
+        GtkWidget *bg_da = gtk_drawing_area_new();
+        gtk_widget_set_size_request(bg_da, 24, 16 + (count - 1) * 48);
+        TimelineBgData *bg_data = g_new(TimelineBgData, 1);
+        bg_data->count = count;
+        g_signal_connect_data(bg_da, "expose-event", G_CALLBACK(on_expose_tl_bg),
+                              bg_data, (GClosureNotify)g_free, (GConnectFlags)0);
+        gtk_fixed_put(GTK_FIXED(overlay), bg_da, 0, 0);
+
+        // Timeline rows
         for (int i = 0; i < count; i++) {
-            gtk_box_pack_start(GTK_BOX(g_today_timeline_container),
-                               create_timeline_row(i, count, &sessions[i]), FALSE, FALSE, 2);
+            GtkWidget *row = create_timeline_row(i, &sessions[i]);
+            gtk_fixed_put(GTK_FIXED(overlay), row, 0, i * 48);
         }
     }
 
     gtk_widget_show_all(g_today_timeline_container);
 }
 
-static void on_prev_day(GtkButton *btn, gpointer data) {
-    if (g_today_day_idx < 2) { g_today_day_idx++; rebuild_timeline(); }
-}
-
-static void on_next_day(GtkButton *btn, gpointer data) {
-    if (g_today_day_idx > 0) { g_today_day_idx--; rebuild_timeline(); }
-}
-
 GtkWidget* create_today_page() {
     GtkWidget *page_vbox = gtk_vbox_new(FALSE, 6);
     gtk_container_set_border_width(GTK_CONTAINER(page_vbox), 6);
 
-    // Header
+    // Header with date
     GtkWidget *hdr = gtk_hbox_new(FALSE, 8);
     gtk_container_set_border_width(GTK_CONTAINER(hdr), 4);
-
-    GtkWidget *prev = gtk_button_new_with_label("<");
-    GtkWidget *next = gtk_button_new_with_label(">");
+    
     g_today_date_label = gtk_label_new(NULL);
+    gtk_label_set_markup(GTK_LABEL(g_today_date_label), 
+        "<span size='15000' weight='bold'>今天 (06月12日)</span>");
     gtk_misc_set_alignment(GTK_MISC(g_today_date_label), 0.5, 0.5);
-
-    g_signal_connect(prev, "clicked", G_CALLBACK(on_prev_day), NULL);
-    g_signal_connect(next, "clicked", G_CALLBACK(on_next_day), NULL);
-
-    gtk_box_pack_start(GTK_BOX(hdr), prev, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(hdr), g_today_date_label, TRUE, TRUE, 0);
-    gtk_box_pack_start(GTK_BOX(hdr), next, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(page_vbox), hdr, FALSE, FALSE, 0);
 
     // Separator

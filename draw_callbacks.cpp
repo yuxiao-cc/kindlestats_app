@@ -190,41 +190,18 @@ gboolean on_expose_progress(GtkWidget *widget, GdkEventExpose *event, gpointer d
     return FALSE;
 }
 
-// ==================== Timeline Dot + Line ====================
+// ==================== Timeline Dot ====================
 
 gboolean on_expose_tl_dot(GtkWidget *widget, GdkEventExpose *event, gpointer data) {
-    int flags = GPOINTER_TO_INT(data);
-    int is_first = flags & 1;
-    int is_last = (flags >> 1) & 1;
+    int is_first = GPOINTER_TO_INT(data);
     cairo_t *cr = gdk_cairo_create(widget->window);
     cairo_set_source_rgb(cr, 1, 1, 1);
     cairo_paint(cr);
 
     double cx = widget->allocation.width / 2.0;
     double cy = 16;
-    double h = widget->allocation.height;
     
-    // Vertical line - continuous
-    cairo_set_source_rgb(cr, 0, 0, 0);
-    cairo_set_line_width(cr, 2);
-    if (is_first && is_last) {
-        // Only one item, no line
-    } else if (is_first) {
-        // First item: line from dot to bottom
-        cairo_move_to(cr, cx, cy);
-        cairo_line_to(cr, cx, h);
-    } else if (is_last) {
-        // Last item: line from top to dot
-        cairo_move_to(cr, cx, 0);
-        cairo_line_to(cr, cx, cy);
-    } else {
-        // Middle item: line from top to bottom
-        cairo_move_to(cr, cx, 0);
-        cairo_line_to(cr, cx, h);
-    }
-    cairo_stroke(cr);
-    
-    // Dot
+    // Dot only (line is drawn by background)
     if (is_first) cairo_set_source_rgb(cr, 0, 0, 0);
     else cairo_set_source_rgb(cr, 1, 1, 1);
     cairo_arc(cr, cx, cy, 6, 0, 2 * G_PI);
