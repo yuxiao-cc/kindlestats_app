@@ -215,19 +215,19 @@ gboolean on_expose_tl_dot(GtkWidget *widget, GdkEventExpose *event, gpointer dat
     } else if (is_page_first_no_top) {
         // First item on non-first page: only line down
         cairo_move_to(cr, cx, cy);
-        cairo_line_to(cr, cx, h + 80);
+        cairo_line_to(cr, cx, h + 120);
     } else if (is_global_first) {
         // Global first: line from center to bottom
         cairo_move_to(cr, cx, cy);
-        cairo_line_to(cr, cx, h + 80);
+        cairo_line_to(cr, cx, h + 120);
     } else if (is_last) {
         // Last: line from top to center
-        cairo_move_to(cr, cx, -80);
+        cairo_move_to(cr, cx, -120);
         cairo_line_to(cr, cx, cy);
     } else {
         // Middle: line through entire height
-        cairo_move_to(cr, cx, -80);
-        cairo_line_to(cr, cx, h + 80);
+        cairo_move_to(cr, cx, -120);
+        cairo_line_to(cr, cx, h + 120);
     }
     cairo_stroke(cr);
     
