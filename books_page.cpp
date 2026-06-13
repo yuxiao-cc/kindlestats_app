@@ -310,6 +310,7 @@ void update_book_detail_content(int idx) {
 void show_book_detail(int book_idx) {
     g_current_book_detail = book_idx;
     update_book_detail_content(book_idx);
+    gtk_widget_hide(g_books_ctrl);
     gtk_widget_hide(g_books_list_container);
     gtk_widget_hide(g_books_pgbar);
     gtk_widget_show(g_books_detail_container);
@@ -317,6 +318,7 @@ void show_book_detail(int book_idx) {
 
 void back_to_book_list() {
     gtk_widget_hide(g_books_detail_container);
+    gtk_widget_show(g_books_ctrl);
     gtk_widget_show(g_books_list_container);
     gtk_widget_show(g_books_pgbar);
 }
@@ -327,16 +329,14 @@ GtkWidget* create_books_page() {
     g_books_page_widget = page_vbox;
 
     // Control bar
-    GtkWidget *ctrl = gtk_hbox_new(FALSE, 8);
-    gtk_container_set_border_width(GTK_CONTAINER(ctrl), 4);
+    g_books_ctrl = gtk_hbox_new(FALSE, 8);
+    gtk_container_set_border_width(GTK_CONTAINER(g_books_ctrl), 4);
 
     GtkWidget *filter_btn = gtk_toggle_button_new_with_label("仅显示未读完");
     g_signal_connect(filter_btn, "toggled", G_CALLBACK(on_filter_toggled), NULL);
-    gtk_box_pack_start(GTK_BOX(ctrl), filter_btn, FALSE, FALSE, 0);
 
     GtkWidget *sort_lbl = gtk_label_new(NULL);
     gtk_label_set_markup(GTK_LABEL(sort_lbl), "<span size='14000' weight='bold'>排序:</span>");
-    gtk_box_pack_start(GTK_BOX(ctrl), sort_lbl, FALSE, FALSE, 0);
 
     GtkWidget *s0 = gtk_button_new_with_label("进度");
     GtkWidget *s1 = gtk_button_new_with_label("时长");
@@ -344,11 +344,14 @@ GtkWidget* create_books_page() {
     g_signal_connect(s0, "clicked", G_CALLBACK(on_sort_clicked), GINT_TO_POINTER(0));
     g_signal_connect(s1, "clicked", G_CALLBACK(on_sort_clicked), GINT_TO_POINTER(1));
     g_signal_connect(s2, "clicked", G_CALLBACK(on_sort_clicked), GINT_TO_POINTER(2));
-    gtk_box_pack_start(GTK_BOX(ctrl), s0, FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(ctrl), s1, FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(ctrl), s2, FALSE, FALSE, 0);
 
-    gtk_box_pack_start(GTK_BOX(page_vbox), ctrl, FALSE, FALSE, 0);
+    gtk_box_pack_end(GTK_BOX(g_books_ctrl), s2, FALSE, FALSE, 0);
+    gtk_box_pack_end(GTK_BOX(g_books_ctrl), s1, FALSE, FALSE, 0);
+    gtk_box_pack_end(GTK_BOX(g_books_ctrl), s0, FALSE, FALSE, 0);
+    gtk_box_pack_end(GTK_BOX(g_books_ctrl), sort_lbl, FALSE, FALSE, 0);
+    gtk_box_pack_end(GTK_BOX(g_books_ctrl), filter_btn, FALSE, FALSE, 0);
+
+    gtk_box_pack_start(GTK_BOX(page_vbox), g_books_ctrl, FALSE, FALSE, 0);
 
     // List container
     g_books_list_container = gtk_vbox_new(FALSE, 2);

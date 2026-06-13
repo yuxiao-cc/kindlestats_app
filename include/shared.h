@@ -41,6 +41,7 @@ extern GtkWidget *g_books_list_container;
 extern GtkWidget *g_books_detail_container;
 extern GtkWidget *g_books_page_widget;
 extern GtkWidget *g_books_pgbar;
+extern GtkWidget *g_books_ctrl;
 extern int g_book_page;
 extern const int BOOKS_PER_PAGE;
 extern bool g_filter_unfinished;

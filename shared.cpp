@@ -52,6 +52,7 @@ GtkWidget *g_books_list_container = NULL;
 GtkWidget *g_books_detail_container = NULL;
 GtkWidget *g_books_page_widget = NULL;
 GtkWidget *g_books_pgbar = NULL;
+GtkWidget *g_books_ctrl = NULL;
 int g_book_page = 0;
 const int BOOKS_PER_PAGE = 4;
 bool g_filter_unfinished = false;
