@@ -19,7 +19,7 @@ int main(int argc, char *argv[]) {
 
     g_main_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_title(GTK_WINDOW(g_main_window), "L:A_N:application_PC:N_ID:kindlestats");
-    gtk_window_fullscreen(GTK_WINDOW(g_main_window));
+    gtk_window_set_default_size(GTK_WINDOW(g_main_window), 1080, 1440);
     gtk_window_set_decorated(GTK_WINDOW(g_main_window), FALSE);
     g_signal_connect(g_main_window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
 

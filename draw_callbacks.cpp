@@ -329,7 +329,8 @@ gboolean on_expose_mini_trend(GtkWidget *widget, GdkEventExpose *event, gpointer
 
     double pw = widget->allocation.width;
     double ph = widget->allocation.height;
-    double bw = (pw - 6 * 10) / 7;
+    double slot = (pw - 6 * 16) / 7;
+    double bw = slot * 0.6;
     double maxv = 0;
     for (int i = 0; i < 7; i++) if (td->trend[i] > maxv) maxv = td->trend[i];
     if (maxv == 0) maxv = 1;
@@ -344,7 +345,7 @@ gboolean on_expose_mini_trend(GtkWidget *widget, GdkEventExpose *event, gpointer
     cairo_select_font_face(cr, "Sans", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
 
     for (int i = 0; i < 7; i++) {
-        double x = 8 + i * (bw + 10);
+        double x = 8 + i * (slot + 16) + (slot - bw) / 2;
         double h = (td->trend[i] / maxv) * (ph - 35);
         double y = ph - 18 - h;
         cairo_set_source_rgb(cr, 0.3, 0.3, 0.3);

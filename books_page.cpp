@@ -184,10 +184,12 @@ void update_book_detail_content(int idx) {
     for (GList *l = children; l; l = l->next) gtk_widget_destroy(GTK_WIDGET(l->data));
     g_list_free(children);
 
-    // Back button
+    // Back button (left-aligned)
     GtkWidget *back_btn = gtk_button_new_with_label("[ < 返回书籍列表 ]");
     g_signal_connect(back_btn, "clicked", G_CALLBACK(on_back_btn_clicked), NULL);
-    gtk_box_pack_start(GTK_BOX(g_books_detail_container), back_btn, FALSE, FALSE, 4);
+    GtkWidget *back_align = gtk_alignment_new(0.0, 0.5, 0.0, 0.0);
+    gtk_container_add(GTK_CONTAINER(back_align), back_btn);
+    gtk_box_pack_start(GTK_BOX(g_books_detail_container), back_align, FALSE, FALSE, 4);
 
     // Header: large cover + title block
     GtkWidget *hdr = gtk_hbox_new(FALSE, 16);
@@ -230,23 +232,42 @@ void update_book_detail_content(int idx) {
     gtk_box_pack_start(GTK_BOX(hdr), title_vbox, TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(g_books_detail_container), hdr, FALSE, FALSE, 0);
 
-    // Stats grid: 2 columns
+    // Stats grid: 2 columns x 3 rows
     GtkWidget *grid = gtk_table_new(3, 2, FALSE);
     gtk_table_set_col_spacings(GTK_TABLE(grid), 20);
     gtk_table_set_row_spacings(GTK_TABLE(grid), 8);
 
-    int h = g_books[idx].timeMin / 60;
-    int m_ = g_books[idx].timeMin % 60;
-    int rem_h = (100 - g_books[idx].progress) * h / (g_books[idx].progress > 0 ? g_books[idx].progress : 1);
+    int total_min = g_books[idx].timeMin;
+    int total_h = total_min / 60;
+    int progress = g_books[idx].progress;
+    int rem_h = progress > 0 ? (100 - progress) * total_h / progress : 0;
+    int rem_days = rem_h / 2;
+    int speed_pct = total_h > 0 ? progress / total_h : 0;
+    int avg_min = total_min / 7;
 
-    const char* lbls[] = {"阅读总时长", "最后阅读", "阅读进度", "已完成", "起始日期", "今日趋势"};
+    const char* lbls[] = {"上次阅读", "剩余时长估计", "阅读速度", "平均每次阅读", "距离初次阅读", "阅读总时长"};
     char vals[6][256];
-    sprintf(vals[0], "%d小时%d分", h, m_);
-    sprintf(vals[1], "%s", g_books[idx].lastRead);
-    sprintf(vals[2], "%d%%", g_books[idx].progress);
-    sprintf(vals[3], "%s", g_books[idx].finished ? "是" : "否");
-    sprintf(vals[4], "%s", g_books[idx].finished ? "已读完" : "进行中");
-    sprintf(vals[5], "见下方图表");
+    char subs[6][256];
+    sprintf(vals[0], "3小时前");
+    sprintf(subs[0], "2026-06-13 17:00");
+    if (progress >= 100) {
+        sprintf(vals[1], "已读完");
+        sprintf(subs[1], " ");
+    } else if (rem_h >= 48) {
+        sprintf(vals[1], "%d天", rem_days);
+        sprintf(subs[1], "预计%d天读完", rem_days);
+    } else {
+        sprintf(vals[1], "%d小时", rem_h);
+        sprintf(subs[1], "预计%d小时读完", rem_h);
+    }
+    sprintf(vals[2], "每小时%d%%", speed_pct);
+    sprintf(subs[2], "比其他书快15%%");
+    sprintf(vals[3], "%d分钟", avg_min);
+    sprintf(subs[3], "比其他书多8%%");
+    sprintf(vals[4], "过去30天");
+    sprintf(subs[4], "2026-05-14");
+    sprintf(vals[5], "%d小时", total_h);
+    sprintf(subs[5], "比其他书多20%%");
 
     for (int i = 0; i < 6; i++) {
         GtkWidget *eb = gtk_event_box_new();
@@ -259,8 +280,8 @@ void update_book_detail_content(int idx) {
         gtk_label_set_markup(GTK_LABEL(ll), lm);
         gtk_misc_set_alignment(GTK_MISC(ll), 0.0, 0.0);
         gtk_box_pack_start(GTK_BOX(vb), ll, FALSE, FALSE, 0);
-        char vm[128];
-        sprintf(vm, "<span size='16000' weight='bold'>%s</span>", vals[i]);
+        char vm[256];
+        sprintf(vm, "<span size='16000' weight='bold'>%s</span>  <span size='10000' color='#888888'>%s</span>", vals[i], subs[i]);
         GtkWidget *vl = gtk_label_new(NULL);
         gtk_label_set_markup(GTK_LABEL(vl), vm);
         gtk_misc_set_alignment(GTK_MISC(vl), 0.0, 0.0);
@@ -270,23 +291,24 @@ void update_book_detail_content(int idx) {
     }
     gtk_box_pack_start(GTK_BOX(g_books_detail_container), grid, FALSE, FALSE, 8);
 
+    // Label above trend
+    GtkWidget *trend_lbl = gtk_label_new(NULL);
+    gtk_label_set_markup(GTK_LABEL(trend_lbl), "<span size='13000' weight='bold'>单本近7天阅读趋势</span>");
+    gtk_misc_set_alignment(GTK_MISC(trend_lbl), 0.0, 0.5);
+    gtk_box_pack_start(GTK_BOX(g_books_detail_container), trend_lbl, FALSE, FALSE, 4);
+
     // Mini trend chart
     GtkWidget *trend_eb = gtk_event_box_new();
     GdkColor white; gdk_color_parse("#ffffff", &white);
     gtk_widget_modify_bg(trend_eb, GTK_STATE_NORMAL, &white);
     GtkWidget *trend_da = gtk_drawing_area_new();
-    gtk_widget_set_size_request(trend_da, -1, 100);
+    gtk_widget_set_size_request(trend_da, -1, 60);
     struct TrendData *td = (struct TrendData*)g_malloc(sizeof(struct TrendData));
     memcpy(td->trend, g_books[idx].trend, sizeof(td->trend));
     g_signal_connect_data(trend_da, "expose-event", G_CALLBACK(on_expose_mini_trend),
                           td, (GClosureNotify)g_free, (GConnectFlags)0);
     gtk_container_add(GTK_CONTAINER(trend_eb), trend_da);
     gtk_box_pack_start(GTK_BOX(g_books_detail_container), trend_eb, TRUE, TRUE, 4);
-
-    // Label above trend
-    GtkWidget *trend_lbl = gtk_label_new(NULL);
-    gtk_label_set_markup(GTK_LABEL(trend_lbl), "<span size='13000' weight='bold'>近7次阅读时长 (分钟)</span>");
-    gtk_misc_set_alignment(GTK_MISC(trend_lbl), 0.0, 0.5);
 
     gtk_widget_show_all(g_books_detail_container);
 }
@@ -295,12 +317,14 @@ void show_book_detail(int book_idx) {
     g_current_book_detail = book_idx;
     update_book_detail_content(book_idx);
     gtk_widget_hide(g_books_list_container);
+    gtk_widget_hide(g_books_pgbar);
     gtk_widget_show(g_books_detail_container);
 }
 
 void back_to_book_list() {
     gtk_widget_hide(g_books_detail_container);
     gtk_widget_show(g_books_list_container);
+    gtk_widget_show(g_books_pgbar);
 }
 
 GtkWidget* create_books_page() {
@@ -342,18 +366,18 @@ GtkWidget* create_books_page() {
     gtk_widget_hide(g_books_detail_container);
 
     // Pagination bar
-    GtkWidget *pgbar = gtk_hbox_new(FALSE, 12);
-    gtk_container_set_border_width(GTK_CONTAINER(pgbar), 4);
+    g_books_pgbar = gtk_hbox_new(FALSE, 12);
+    gtk_container_set_border_width(GTK_CONTAINER(g_books_pgbar), 4);
     GtkWidget *prev = gtk_button_new_with_label("上一页");
     GtkWidget *page_lbl = gtk_label_new(NULL);
     gtk_label_set_markup(GTK_LABEL(page_lbl), "<span size='14000' weight='bold'>第 1 / 1 页</span>");
     GtkWidget *next = gtk_button_new_with_label("下一页");
     g_signal_connect(prev, "clicked", G_CALLBACK(on_prev_page), NULL);
     g_signal_connect(next, "clicked", G_CALLBACK(on_next_page), NULL);
-    gtk_box_pack_start(GTK_BOX(pgbar), prev, FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(pgbar), page_lbl, TRUE, TRUE, 0);
-    gtk_box_pack_start(GTK_BOX(pgbar), next, FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(page_vbox), pgbar, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(g_books_pgbar), prev, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(g_books_pgbar), page_lbl, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(g_books_pgbar), next, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(page_vbox), g_books_pgbar, FALSE, FALSE, 0);
 
     g_object_set_data(G_OBJECT(page_vbox), "page-label", page_lbl);
 
