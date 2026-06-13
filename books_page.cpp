@@ -302,7 +302,7 @@ void update_book_detail_content(int idx) {
     g_signal_connect_data(trend_da, "expose-event", G_CALLBACK(on_expose_mini_trend),
                           td, (GClosureNotify)g_free, (GConnectFlags)0);
     gtk_container_add(GTK_CONTAINER(trend_eb), trend_da);
-    gtk_box_pack_start(GTK_BOX(g_books_detail_container), trend_eb, TRUE, TRUE, 4);
+    gtk_box_pack_start(GTK_BOX(g_books_detail_container), trend_eb, FALSE, FALSE, 4);
 
     gtk_widget_show_all(g_books_detail_container);
 }
