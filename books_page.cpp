@@ -345,11 +345,11 @@ GtkWidget* create_books_page() {
     g_signal_connect(s1, "clicked", G_CALLBACK(on_sort_clicked), GINT_TO_POINTER(1));
     g_signal_connect(s2, "clicked", G_CALLBACK(on_sort_clicked), GINT_TO_POINTER(2));
 
+    gtk_box_pack_start(GTK_BOX(g_books_ctrl), filter_btn, FALSE, FALSE, 0);
     gtk_box_pack_end(GTK_BOX(g_books_ctrl), s2, FALSE, FALSE, 0);
     gtk_box_pack_end(GTK_BOX(g_books_ctrl), s1, FALSE, FALSE, 0);
     gtk_box_pack_end(GTK_BOX(g_books_ctrl), s0, FALSE, FALSE, 0);
     gtk_box_pack_end(GTK_BOX(g_books_ctrl), sort_lbl, FALSE, FALSE, 0);
-    gtk_box_pack_end(GTK_BOX(g_books_ctrl), filter_btn, FALSE, FALSE, 0);
 
     gtk_box_pack_start(GTK_BOX(page_vbox), g_books_ctrl, FALSE, FALSE, 0);
 
