@@ -296,13 +296,13 @@ void update_book_detail_content(int idx) {
     GdkColor white; gdk_color_parse("#ffffff", &white);
     gtk_widget_modify_bg(trend_eb, GTK_STATE_NORMAL, &white);
     GtkWidget *trend_da = gtk_drawing_area_new();
-    gtk_widget_set_size_request(trend_da, -1, 80);
+    gtk_widget_set_size_request(trend_da, -1, 120);
     struct TrendData *td = (struct TrendData*)g_malloc(sizeof(struct TrendData));
     memcpy(td->trend, g_books[idx].trend, sizeof(td->trend));
     g_signal_connect_data(trend_da, "expose-event", G_CALLBACK(on_expose_mini_trend),
                           td, (GClosureNotify)g_free, (GConnectFlags)0);
     gtk_container_add(GTK_CONTAINER(trend_eb), trend_da);
-    gtk_box_pack_start(GTK_BOX(g_books_detail_container), trend_eb, FALSE, FALSE, 4);
+    gtk_box_pack_start(GTK_BOX(g_books_detail_container), trend_eb, FALSE, TRUE, 4);
 
     gtk_widget_show_all(g_books_detail_container);
 }
