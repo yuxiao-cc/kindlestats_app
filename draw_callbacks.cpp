@@ -337,23 +337,23 @@ gboolean on_expose_mini_trend(GtkWidget *widget, GdkEventExpose *event, gpointer
 
     // Title inside chart
     cairo_set_source_rgb(cr, 0, 0, 0);
-    cairo_set_font_size(cr, 16);
+    cairo_set_font_size(cr, 13);
     cairo_select_font_face(cr, "Sans", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
-    cairo_move_to(cr, 8, 18);
+    cairo_move_to(cr, 8, 15);
     cairo_show_text(cr, "单本近7次阅读趋势");
 
     cairo_set_source_rgb(cr, 0, 0, 0);
     cairo_set_line_width(cr, 1);
-    cairo_move_to(cr, 8, ph - 18);
-    cairo_line_to(cr, pw - 8, ph - 18);
+    cairo_move_to(cr, 8, ph - 16);
+    cairo_line_to(cr, pw - 8, ph - 16);
     cairo_stroke(cr);
 
-    cairo_set_font_size(cr, 16);
+    cairo_set_font_size(cr, 11);
 
     for (int i = 0; i < 7; i++) {
         double x = 8 + i * (slot + 16) + (slot - bw) / 2;
-        double h = (td->trend[i] / maxv) * (ph - 35);
-        double y = ph - 18 - h;
+        double h = (td->trend[i] / maxv) * (ph - 38);
+        double y = ph - 16 - h;
         cairo_set_source_rgb(cr, 0.3, 0.3, 0.3);
         cairo_rectangle(cr, x, y, bw, h);
         cairo_fill(cr);
@@ -367,7 +367,7 @@ gboolean on_expose_mini_trend(GtkWidget *widget, GdkEventExpose *event, gpointer
         else strcpy(lbl, "-");
         cairo_text_extents_t ext;
         cairo_text_extents(cr, lbl, &ext);
-        cairo_move_to(cr, x + bw/2 - ext.width/2, ph - 4);
+        cairo_move_to(cr, x + bw/2 - ext.width/2, ph - 3);
         cairo_show_text(cr, lbl);
     }
 
