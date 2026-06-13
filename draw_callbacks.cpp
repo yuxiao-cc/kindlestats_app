@@ -337,9 +337,9 @@ gboolean on_expose_mini_trend(GtkWidget *widget, GdkEventExpose *event, gpointer
 
     // Title inside chart
     cairo_set_source_rgb(cr, 0, 0, 0);
-    cairo_set_font_size(cr, 13);
+    cairo_set_font_size(cr, 16);
     cairo_select_font_face(cr, "Sans", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
-    cairo_move_to(cr, 8, 16);
+    cairo_move_to(cr, 8, 18);
     cairo_show_text(cr, "单本近7次阅读趋势");
 
     cairo_set_source_rgb(cr, 0, 0, 0);
@@ -348,7 +348,7 @@ gboolean on_expose_mini_trend(GtkWidget *widget, GdkEventExpose *event, gpointer
     cairo_line_to(cr, pw - 8, ph - 18);
     cairo_stroke(cr);
 
-    cairo_set_font_size(cr, 14);
+    cairo_set_font_size(cr, 16);
 
     for (int i = 0; i < 7; i++) {
         double x = 8 + i * (slot + 16) + (slot - bw) / 2;
