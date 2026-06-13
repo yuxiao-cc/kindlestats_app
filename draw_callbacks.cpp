@@ -330,19 +330,25 @@ gboolean on_expose_mini_trend(GtkWidget *widget, GdkEventExpose *event, gpointer
     double pw = widget->allocation.width;
     double ph = widget->allocation.height;
     double slot = (pw - 6 * 16) / 7;
-    double bw = slot * 0.6;
+    double bw = slot * 0.35;
     double maxv = 0;
     for (int i = 0; i < 7; i++) if (td->trend[i] > maxv) maxv = td->trend[i];
     if (maxv == 0) maxv = 1;
 
+    // Title inside chart
     cairo_set_source_rgb(cr, 0, 0, 0);
-    cairo_set_line_width(cr, 1.5);
+    cairo_set_font_size(cr, 11);
+    cairo_select_font_face(cr, "Sans", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
+    cairo_move_to(cr, 8, 14);
+    cairo_show_text(cr, "单本近7天阅读趋势");
+
+    cairo_set_source_rgb(cr, 0, 0, 0);
+    cairo_set_line_width(cr, 1);
     cairo_move_to(cr, 8, ph - 18);
     cairo_line_to(cr, pw - 8, ph - 18);
     cairo_stroke(cr);
 
-    cairo_set_font_size(cr, 10);
-    cairo_select_font_face(cr, "Sans", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
+    cairo_set_font_size(cr, 12);
 
     for (int i = 0; i < 7; i++) {
         double x = 8 + i * (slot + 16) + (slot - bw) / 2;

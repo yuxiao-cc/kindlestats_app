@@ -202,13 +202,13 @@ void update_book_detail_content(int idx) {
 
     GtkWidget *title_vbox = gtk_vbox_new(FALSE, 4);
     char m[512];
-    sprintf(m, "<span size='22000' weight='bold'>%s</span>", g_books[idx].title);
+    sprintf(m, "<span size='18000' weight='bold'>%s</span>", g_books[idx].title);
     GtkWidget *lbl_t = gtk_label_new(NULL);
     gtk_label_set_markup(GTK_LABEL(lbl_t), m);
     gtk_misc_set_alignment(GTK_MISC(lbl_t), 0.0, 0.5);
     gtk_box_pack_start(GTK_BOX(title_vbox), lbl_t, FALSE, FALSE, 0);
 
-    sprintf(m, "<span size='14000' color='#505050'>作者: %s</span>", g_books[idx].author);
+    sprintf(m, "<span size='12000' color='#505050'>作者: %s</span>", g_books[idx].author);
     GtkWidget *lbl_a = gtk_label_new(NULL);
     gtk_label_set_markup(GTK_LABEL(lbl_a), m);
     gtk_misc_set_alignment(GTK_MISC(lbl_a), 0.0, 0.5);
@@ -217,13 +217,13 @@ void update_book_detail_content(int idx) {
     // Progress
     GtkWidget *pbox = gtk_hbox_new(FALSE, 8);
     GtkWidget *prog_da = gtk_drawing_area_new();
-    gtk_widget_set_size_request(prog_da, 250, 12);
+    gtk_widget_set_size_request(prog_da, 350, 8);
     double *pval = (double*)g_malloc(sizeof(double));
     *pval = g_books[idx].progress / 100.0;
     g_signal_connect_data(prog_da, "expose-event", G_CALLBACK(on_expose_progress),
                           pval, (GClosureNotify)destroy_double_ptr, (GConnectFlags)0);
     gtk_box_pack_start(GTK_BOX(pbox), prog_da, FALSE, FALSE, 0);
-    sprintf(m, "<span size='14000' weight='bold'>%d%%</span>", g_books[idx].progress);
+    sprintf(m, "<span size='12000' weight='bold'>%d%%</span>", g_books[idx].progress);
     GtkWidget *lbl_p = gtk_label_new(NULL);
     gtk_label_set_markup(GTK_LABEL(lbl_p), m);
     gtk_box_pack_start(GTK_BOX(pbox), lbl_p, FALSE, FALSE, 0);
@@ -275,13 +275,13 @@ void update_book_detail_content(int idx) {
         gtk_widget_modify_bg(eb, GTK_STATE_NORMAL, &white);
         GtkWidget *vb = gtk_vbox_new(FALSE, 2);
         char lm[128];
-        sprintf(lm, "<span size='12000' color='#505050'>%s</span>", lbls[i]);
+        sprintf(lm, "<span size='10000' color='#505050'>%s</span>", lbls[i]);
         GtkWidget *ll = gtk_label_new(NULL);
         gtk_label_set_markup(GTK_LABEL(ll), lm);
         gtk_misc_set_alignment(GTK_MISC(ll), 0.0, 0.0);
         gtk_box_pack_start(GTK_BOX(vb), ll, FALSE, FALSE, 0);
         char vm[256];
-        sprintf(vm, "<span size='16000' weight='bold'>%s</span>  <span size='10000' color='#888888'>%s</span>", vals[i], subs[i]);
+        sprintf(vm, "<span size='14000' weight='bold'>%s</span>  <span size='9000' color='#888888'>%s</span>", vals[i], subs[i]);
         GtkWidget *vl = gtk_label_new(NULL);
         gtk_label_set_markup(GTK_LABEL(vl), vm);
         gtk_misc_set_alignment(GTK_MISC(vl), 0.0, 0.0);
@@ -291,18 +291,12 @@ void update_book_detail_content(int idx) {
     }
     gtk_box_pack_start(GTK_BOX(g_books_detail_container), grid, FALSE, FALSE, 8);
 
-    // Label above trend
-    GtkWidget *trend_lbl = gtk_label_new(NULL);
-    gtk_label_set_markup(GTK_LABEL(trend_lbl), "<span size='13000' weight='bold'>单本近7天阅读趋势</span>");
-    gtk_misc_set_alignment(GTK_MISC(trend_lbl), 0.0, 0.5);
-    gtk_box_pack_start(GTK_BOX(g_books_detail_container), trend_lbl, FALSE, FALSE, 4);
-
-    // Mini trend chart
+    // Mini trend chart (title drawn inside)
     GtkWidget *trend_eb = gtk_event_box_new();
     GdkColor white; gdk_color_parse("#ffffff", &white);
     gtk_widget_modify_bg(trend_eb, GTK_STATE_NORMAL, &white);
     GtkWidget *trend_da = gtk_drawing_area_new();
-    gtk_widget_set_size_request(trend_da, -1, 60);
+    gtk_widget_set_size_request(trend_da, -1, 50);
     struct TrendData *td = (struct TrendData*)g_malloc(sizeof(struct TrendData));
     memcpy(td->trend, g_books[idx].trend, sizeof(td->trend));
     g_signal_connect_data(trend_da, "expose-event", G_CALLBACK(on_expose_mini_trend),
