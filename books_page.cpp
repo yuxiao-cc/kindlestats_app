@@ -51,25 +51,27 @@ static GtkWidget* create_book_row(int book_idx) {
     // Info column
     GtkWidget *vbox = gtk_vbox_new(FALSE, 4);
 
-    // Title + author line
+    // Title + author + time line
+    GtkWidget *ta_hbox = gtk_hbox_new(FALSE, 8);
+
     char m1[512];
     sprintf(m1, "<span size='14000' weight='bold'>%s</span>  <span size='11000' color='#505050'>%s</span>",
             g_books[book_idx].title, g_books[book_idx].author);
     GtkWidget *lbl_ta = gtk_label_new(NULL);
     gtk_label_set_markup(GTK_LABEL(lbl_ta), m1);
     gtk_misc_set_alignment(GTK_MISC(lbl_ta), 0.0, 0.5);
-    gtk_box_pack_start(GTK_BOX(vbox), lbl_ta, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(ta_hbox), lbl_ta, TRUE, TRUE, 0);
 
-    // Time
-    char m2[256];
     int h = g_books[book_idx].timeMin / 60;
     int m = g_books[book_idx].timeMin % 60;
-    sprintf(m2, "<span size='13000'>阅读时长: %d小时%d分 · 最后阅读: %s</span>",
-            h, m, g_books[book_idx].lastRead);
+    char m2[64];
+    sprintf(m2, "<span size='11000' color='#505050'>%d小时%d分</span>", h, m);
     GtkWidget *lbl_t = gtk_label_new(NULL);
     gtk_label_set_markup(GTK_LABEL(lbl_t), m2);
-    gtk_misc_set_alignment(GTK_MISC(lbl_t), 0.0, 0.5);
-    gtk_box_pack_start(GTK_BOX(vbox), lbl_t, FALSE, FALSE, 0);
+    gtk_misc_set_alignment(GTK_MISC(lbl_t), 1.0, 0.5);
+    gtk_box_pack_start(GTK_BOX(ta_hbox), lbl_t, FALSE, FALSE, 0);
+
+    gtk_box_pack_start(GTK_BOX(vbox), ta_hbox, FALSE, FALSE, 0);
 
     // Progress row
     GtkWidget *pbox = gtk_hbox_new(FALSE, 8);
