@@ -175,15 +175,16 @@ gboolean on_expose_progress(GtkWidget *widget, GdkEventExpose *event, gpointer d
     cairo_paint(cr);
 
     double pw = widget->allocation.width;
-    double ph = widget->allocation.height;
+    double ph = 5;
 
     cairo_set_source_rgb(cr, 0, 0, 0);
-    cairo_rectangle(cr, 0, 0, pw * progress, ph);
+    double bar_y = (widget->allocation.height - ph) / 2.0;
+    cairo_rectangle(cr, 0, bar_y, pw * progress, ph);
     cairo_fill(cr);
 
     cairo_set_source_rgb(cr, 0, 0, 0);
     cairo_set_line_width(cr, 1);
-    cairo_rectangle(cr, 0, 0, pw, ph);
+    cairo_rectangle(cr, 0, bar_y, pw, ph);
     cairo_stroke(cr);
 
     cairo_destroy(cr);
