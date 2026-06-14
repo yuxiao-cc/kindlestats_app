@@ -3,11 +3,32 @@
 #include "books_page.h"
 #include "today_page.h"
 #include <stdio.h>
+#include <string.h>
+#ifdef __linux__
+#include <unistd.h>
+#endif
 
 GtkBuilder* load_ui(const char *filename) {
     GtkBuilder *builder = gtk_builder_new();
     GError *err = NULL;
     char path[512];
+
+    // Try relative to executable first
+    char exe_path[512] = {0};
+#ifdef __linux__
+    ssize_t len = readlink("/proc/self/exe", exe_path, sizeof(exe_path) - 1);
+    if (len > 0) {
+        exe_path[len] = '\0';
+        char *last_slash = strrchr(exe_path, '/');
+        if (last_slash) {
+            *last_slash = '\0';
+            snprintf(path, sizeof(path), "%s/ui/%s", exe_path, filename);
+            if (gtk_builder_add_from_file(builder, path, &err)) return builder;
+            g_error_free(err); err = NULL;
+        }
+    }
+#endif
+    // Fallback: relative to cwd
     snprintf(path, sizeof(path), "ui/%s", filename);
     if (!gtk_builder_add_from_file(builder, path, &err)) {
         log_debug(err->message);
