@@ -74,7 +74,7 @@ static GtkWidget* create_book_row(int book_idx) {
     // Progress row
     GtkWidget *pbox = gtk_hbox_new(FALSE, 8);
     GtkWidget *prog_da = gtk_drawing_area_new();
-    gtk_widget_set_size_request(prog_da, 350, 8);
+    gtk_widget_set_size_request(prog_da, 420, 5);
     double *pval = (double*)g_malloc(sizeof(double));
     *pval = g_books[book_idx].progress / 100.0;
     g_signal_connect_data(prog_da, "expose-event", G_CALLBACK(on_expose_progress),
@@ -215,7 +215,7 @@ void update_book_detail_content(int idx) {
     // Progress
     GtkWidget *pbox = gtk_hbox_new(FALSE, 8);
     GtkWidget *prog_da = gtk_drawing_area_new();
-    gtk_widget_set_size_request(prog_da, 350, 8);
+    gtk_widget_set_size_request(prog_da, 420, 5);
     double *pval = (double*)g_malloc(sizeof(double));
     *pval = g_books[idx].progress / 100.0;
     g_signal_connect_data(prog_da, "expose-event", G_CALLBACK(on_expose_progress),
