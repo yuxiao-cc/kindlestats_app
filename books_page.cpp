@@ -79,6 +79,7 @@ static GtkWidget* create_book_row(int book_idx) {
     GdkColor white_bg;
     gdk_color_parse("#ffffff", &white_bg);
     gtk_widget_modify_bg(prog_da, GTK_STATE_NORMAL, &white_bg);
+    g_object_set_data(G_OBJECT(prog_da), "bg_white", GINT_TO_POINTER(1));
     gtk_widget_set_size_request(prog_da, -1, 5);
     double *pval = (double*)g_malloc(sizeof(double));
     *pval = g_books[book_idx].progress / 100.0;
@@ -220,9 +221,6 @@ void update_book_detail_content(int idx) {
     // Progress
     GtkWidget *pbox = gtk_hbox_new(FALSE, 8);
     GtkWidget *prog_da = gtk_drawing_area_new();
-    GdkColor white_bg;
-    gdk_color_parse("#ffffff", &white_bg);
-    gtk_widget_modify_bg(prog_da, GTK_STATE_NORMAL, &white_bg);
     gtk_widget_set_size_request(prog_da, -1, 5);
     double *pval = (double*)g_malloc(sizeof(double));
     *pval = g_books[idx].progress / 100.0;

@@ -171,7 +171,11 @@ gboolean on_expose_progress(GtkWidget *widget, GdkEventExpose *event, gpointer d
     double progress = *(double*)data;
     cairo_t *cr = gdk_cairo_create(widget->window);
 
-    cairo_set_source_rgb(cr, 1, 1, 1);
+    int white_bg = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "bg_white"));
+    if (white_bg)
+        cairo_set_source_rgb(cr, 1, 1, 1);
+    else
+        cairo_set_source_rgb(cr, 0.88, 0.88, 0.88);
     cairo_paint(cr);
 
     double pw = widget->allocation.width;
