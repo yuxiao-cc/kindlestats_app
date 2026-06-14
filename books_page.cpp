@@ -74,12 +74,12 @@ static GtkWidget* create_book_row(int book_idx) {
     // Progress row
     GtkWidget *pbox = gtk_hbox_new(FALSE, 8);
     GtkWidget *prog_da = gtk_drawing_area_new();
-    gtk_widget_set_size_request(prog_da, 420, 5);
+    gtk_widget_set_size_request(prog_da, -1, 5);
     double *pval = (double*)g_malloc(sizeof(double));
     *pval = g_books[book_idx].progress / 100.0;
     g_signal_connect_data(prog_da, "expose-event", G_CALLBACK(on_expose_progress),
                           pval, (GClosureNotify)destroy_double_ptr, (GConnectFlags)0);
-    gtk_box_pack_start(GTK_BOX(pbox), prog_da, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(pbox), prog_da, TRUE, TRUE, 0);
 
     char m3[64];
     sprintf(m3, "<span size='13000' weight='bold'>%d%%</span>", g_books[book_idx].progress);
@@ -215,12 +215,12 @@ void update_book_detail_content(int idx) {
     // Progress
     GtkWidget *pbox = gtk_hbox_new(FALSE, 8);
     GtkWidget *prog_da = gtk_drawing_area_new();
-    gtk_widget_set_size_request(prog_da, 420, 5);
+    gtk_widget_set_size_request(prog_da, -1, 5);
     double *pval = (double*)g_malloc(sizeof(double));
     *pval = g_books[idx].progress / 100.0;
     g_signal_connect_data(prog_da, "expose-event", G_CALLBACK(on_expose_progress),
                           pval, (GClosureNotify)destroy_double_ptr, (GConnectFlags)0);
-    gtk_box_pack_start(GTK_BOX(pbox), prog_da, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(pbox), prog_da, TRUE, TRUE, 0);
     sprintf(m, "<span size='12000' weight='bold'>%d%%</span>", g_books[idx].progress);
     GtkWidget *lbl_p = gtk_label_new(NULL);
     gtk_label_set_markup(GTK_LABEL(lbl_p), m);
