@@ -13,14 +13,6 @@
           </object>
         </child>
         <child>
-          <object class="GtkLabel" id="sort_lbl">
-            <property name="label">排序:</property>
-          </object>
-          <packing>
-            <property name="pack_type">end</property>
-          </packing>
-        </child>
-        <child>
           <object class="GtkButton" id="sort_btn_alpha">
             <property name="label">字母</property>
           </object>
@@ -39,6 +31,14 @@
         <child>
           <object class="GtkButton" id="sort_btn_progress">
             <property name="label">进度</property>
+          </object>
+          <packing>
+            <property name="pack_type">end</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel" id="sort_lbl">
+            <property name="label">排序:</property>
           </object>
           <packing>
             <property name="pack_type">end</property>
