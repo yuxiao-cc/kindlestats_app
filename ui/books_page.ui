@@ -5,8 +5,8 @@
     <property name="border_width">6</property>
     <child>
       <object class="GtkHBox" id="books_ctrl">
-        <property name="spacing">8</property>
-        <property name="border_width">4</property>
+        <property name="spacing">6</property>
+        <property name="border_width">2</property>
         <child>
           <object class="GtkToggleButton" id="filter_btn">
             <property name="label">仅显示未读完</property>
@@ -18,6 +18,7 @@
           </object>
           <packing>
             <property name="pack_type">end</property>
+            <property name="padding">0</property>
           </packing>
         </child>
         <child>
@@ -26,6 +27,7 @@
           </object>
           <packing>
             <property name="pack_type">end</property>
+            <property name="padding">0</property>
           </packing>
         </child>
         <child>
@@ -34,11 +36,13 @@
           </object>
           <packing>
             <property name="pack_type">end</property>
+            <property name="padding">0</property>
           </packing>
         </child>
         <child>
           <object class="GtkLabel" id="sort_lbl">
-            <property name="label">排序:</property>
+            <property name="use_markup">True</property>
+            <property name="label" translatable="no">&lt;span size=&apos;10000&apos;&gt;排序:&lt;/span&gt;</property>
           </object>
           <packing>
             <property name="pack_type">end</property>

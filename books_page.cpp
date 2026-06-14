@@ -53,7 +53,7 @@ static GtkWidget* create_book_row(int book_idx) {
 
     // Title + author line
     char m1[512];
-    sprintf(m1, "<span size='17000' weight='bold'>%s</span>  <span size='13000' color='#505050'>%s</span>",
+    sprintf(m1, "<span size='14000' weight='bold'>%s</span>  <span size='11000' color='#505050'>%s</span>",
             g_books[book_idx].title, g_books[book_idx].author);
     GtkWidget *lbl_ta = gtk_label_new(NULL);
     gtk_label_set_markup(GTK_LABEL(lbl_ta), m1);
@@ -74,7 +74,7 @@ static GtkWidget* create_book_row(int book_idx) {
     // Progress row
     GtkWidget *pbox = gtk_hbox_new(FALSE, 8);
     GtkWidget *prog_da = gtk_drawing_area_new();
-    gtk_widget_set_size_request(prog_da, 200, 10);
+    gtk_widget_set_size_request(prog_da, 350, 8);
     double *pval = (double*)g_malloc(sizeof(double));
     *pval = g_books[book_idx].progress / 100.0;
     g_signal_connect_data(prog_da, "expose-event", G_CALLBACK(on_expose_progress),
@@ -339,7 +339,7 @@ GtkWidget* create_books_page() {
     gtk_label_set_markup(GTK_LABEL(g_books_page_label),
         "<span size='14000' weight='bold'>第 1 / 1 页</span>");
     GtkWidget *sort_lbl = GTK_WIDGET(gtk_builder_get_object(builder, "sort_lbl"));
-    gtk_label_set_markup(GTK_LABEL(sort_lbl), "<span size='14000' weight='bold'>排序:</span>");
+    gtk_label_set_markup(GTK_LABEL(sort_lbl), "<span size='10000'>排序:</span>");
 
     g_object_ref(g_books_ctrl);
     g_object_ref(g_books_list_container);
