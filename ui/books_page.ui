@@ -1,0 +1,102 @@
+<?xml version="1.0"?>
+<interface>
+  <object class="GtkVBox" id="books_page">
+    <property name="spacing">6</property>
+    <property name="border_width">6</property>
+    <child>
+      <object class="GtkHBox" id="books_ctrl">
+        <property name="spacing">8</property>
+        <property name="border_width">4</property>
+        <child>
+          <object class="GtkToggleButton" id="filter_btn">
+            <property name="label">仅显示未读完</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkLabel" id="sort_lbl">
+            <property name="label">排序:</property>
+          </object>
+          <packing>
+            <property name="pack_type">end</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkButton" id="sort_btn_alpha">
+            <property name="label">字母</property>
+          </object>
+          <packing>
+            <property name="pack_type">end</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkButton" id="sort_btn_time">
+            <property name="label">时长</property>
+          </object>
+          <packing>
+            <property name="pack_type">end</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkButton" id="sort_btn_progress">
+            <property name="label">进度</property>
+          </object>
+          <packing>
+            <property name="pack_type">end</property>
+          </packing>
+        </child>
+      </object>
+      <packing>
+        <property name="expand">False</property>
+        <property name="fill">False</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkVBox" id="books_list_container">
+        <property name="spacing">2</property>
+      </object>
+      <packing>
+        <property name="expand">True</property>
+        <property name="fill">True</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkVBox" id="books_detail_container">
+        <property name="spacing">4</property>
+        <property name="visible">False</property>
+      </object>
+      <packing>
+        <property name="expand">True</property>
+        <property name="fill">True</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkHBox" id="books_pgbar">
+        <property name="spacing">12</property>
+        <property name="border_width">4</property>
+        <child>
+          <object class="GtkButton" id="books_prev_btn">
+            <property name="label">上一页</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkLabel" id="books_page_label">
+            <property name="label">第 1 / 1 页</property>
+          </object>
+          <packing>
+            <property name="expand">True</property>
+            <property name="fill">True</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkButton" id="books_next_btn">
+            <property name="label">下一页</property>
+          </object>
+        </child>
+      </object>
+      <packing>
+        <property name="expand">False</property>
+        <property name="fill">False</property>
+      </packing>
+    </child>
+  </object>
+</interface>

@@ -4,6 +4,20 @@
 #include "today_page.h"
 #include <stdio.h>
 
+GtkBuilder* load_ui(const char *filename) {
+    GtkBuilder *builder = gtk_builder_new();
+    GError *err = NULL;
+    char path[512];
+    snprintf(path, sizeof(path), "ui/%s", filename);
+    if (!gtk_builder_add_from_file(builder, path, &err)) {
+        log_debug(err->message);
+        g_error_free(err);
+        g_object_unref(builder);
+        return NULL;
+    }
+    return builder;
+}
+
 static GtkWidget* make_tab_label(const char* text) {
     GtkWidget *lbl = gtk_label_new(NULL);
     char m[128];
@@ -17,46 +31,28 @@ int main(int argc, char *argv[]) {
     gtk_init(&argc, &argv);
     log_debug("gtk_init done");
 
-    g_main_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_title(GTK_WINDOW(g_main_window), "L:A_N:application_PC:N_ID:kindlestats");
-    gtk_window_set_default_size(GTK_WINDOW(g_main_window), 1080, 1440);
-    gtk_window_set_decorated(GTK_WINDOW(g_main_window), FALSE);
+    GtkBuilder *builder = load_ui("main_window.ui");
+    if (!builder) return 1;
+
+    g_main_window = GTK_WIDGET(gtk_builder_get_object(builder, "main_window"));
     g_signal_connect(g_main_window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
 
     GdkColor bg;
     gdk_color_parse("#f5f4ef", &bg);
     gtk_widget_modify_bg(g_main_window, GTK_STATE_NORMAL, &bg);
 
-    log_debug("Building UI...");
-
-    // Main vertical container
-    GtkWidget *main_vbox = gtk_vbox_new(FALSE, 0);
-    gtk_container_add(GTK_CONTAINER(g_main_window), main_vbox);
-
-    // Header bar
-    GtkWidget *header = gtk_hbox_new(FALSE, 8);
-    gtk_container_set_border_width(GTK_CONTAINER(header), 8);
-    GtkWidget *title_lbl = gtk_label_new(NULL);
+    GtkWidget *title_lbl = GTK_WIDGET(gtk_builder_get_object(builder, "title_lbl"));
     gtk_label_set_markup(GTK_LABEL(title_lbl), "<span size='17000' weight='bold'>KindleStats</span>");
-    gtk_misc_set_alignment(GTK_MISC(title_lbl), 0.0, 0.5);
-    gtk_box_pack_start(GTK_BOX(header), title_lbl, TRUE, TRUE, 0);
 
-    GtkWidget *exit_btn = gtk_button_new();
-    GtkWidget *exit_lbl = gtk_label_new(NULL);
-    gtk_label_set_markup(GTK_LABEL(exit_lbl), "<span size='10000'>退出 [X]</span>");
-    gtk_container_add(GTK_CONTAINER(exit_btn), exit_lbl);
+    GtkWidget *exit_btn = GTK_WIDGET(gtk_builder_get_object(builder, "exit_btn"));
+    GtkWidget *exit_child = gtk_bin_get_child(GTK_BIN(exit_btn));
+    if (exit_child && GTK_IS_LABEL(exit_child)) {
+        gtk_label_set_markup(GTK_LABEL(exit_child), "<span size='10000'>退出 [X]</span>");
+    }
     g_signal_connect(exit_btn, "clicked", G_CALLBACK(gtk_main_quit), NULL);
-    gtk_box_pack_end(GTK_BOX(header), exit_btn, FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(main_vbox), header, FALSE, FALSE, 0);
 
-    // Bottom border for header
-    GtkWidget *hdr_sep = gtk_hseparator_new();
-    gtk_box_pack_start(GTK_BOX(main_vbox), hdr_sep, FALSE, FALSE, 0);
-
-    // Notebook with 3 tabs
-    GtkWidget *nb = gtk_notebook_new();
-    gtk_notebook_set_tab_pos(GTK_NOTEBOOK(nb), GTK_POS_TOP);
-    gtk_box_pack_start(GTK_BOX(main_vbox), nb, TRUE, TRUE, 0);
+    GtkWidget *nb = GTK_WIDGET(gtk_builder_get_object(builder, "notebook"));
+    g_object_unref(builder);
 
     log_debug("Creating dashboard page...");
     gtk_notebook_append_page(GTK_NOTEBOOK(nb), create_dashboard_page(), make_tab_label("数据概览"));
@@ -68,7 +64,6 @@ int main(int argc, char *argv[]) {
     log_debug("Showing window...");
     gtk_widget_show_all(g_main_window);
 
-    // Initial e-ink full refresh (proven pattern from working version)
     system("eips -c");
 
     log_debug("Entering gtk_main...");

@@ -21,7 +21,6 @@ static GtkWidget* create_timeline_row(int global_idx, int idx, int count, Sessio
     // Dot + line drawing area (full height of row)
     GtkWidget *dot_da = gtk_drawing_area_new();
     gtk_widget_set_size_request(dot_da, 30, ROW_HEIGHT);
-    // flags: bit0=is_global_first, bit1=is_last, bit2=not_first_page_first
     int is_global_first = (global_idx == 0) ? 1 : 0;
     int is_last = (idx == count - 1) ? 1 : 0;
     int is_page_first_no_top = (global_idx > 0 && idx == 0) ? 1 : 0;
@@ -55,7 +54,7 @@ static GtkWidget* create_timeline_row(int global_idx, int idx, int count, Sessio
     gtk_misc_set_alignment(GTK_MISC(lbl_b), 0.0, 0.5);
     gtk_box_pack_start(GTK_BOX(vbox), lbl_b, FALSE, FALSE, 0);
 
-    // Progress (without +xx%)
+    // Progress
     sprintf(m, "<span size='11000' color='#505050'>进度: %s</span>", sess->progress);
     GtkWidget *lbl_p = gtk_label_new(NULL);
     gtk_label_set_markup(GTK_LABEL(lbl_p), m);
@@ -124,42 +123,34 @@ void rebuild_timeline() {
 }
 
 GtkWidget* create_today_page() {
-    GtkWidget *page_vbox = gtk_vbox_new(FALSE, 6);
-    gtk_container_set_border_width(GTK_CONTAINER(page_vbox), 6);
+    GtkBuilder *builder = load_ui("today_page.ui");
+    if (!builder) return gtk_vbox_new(FALSE, 0);
 
-    // Header with date
-    GtkWidget *hdr = gtk_hbox_new(FALSE, 8);
-    gtk_container_set_border_width(GTK_CONTAINER(hdr), 4);
-    
-    g_today_date_label = gtk_label_new(NULL);
-    gtk_label_set_markup(GTK_LABEL(g_today_date_label), 
+    GtkWidget *page = GTK_WIDGET(gtk_builder_get_object(builder, "today_page"));
+    if (!page || !GTK_IS_WIDGET(page)) { g_object_unref(builder); return gtk_vbox_new(FALSE, 0); }
+    g_object_ref_sink(page);
+
+    // Assign globals from builder
+    g_today_date_label = GTK_WIDGET(gtk_builder_get_object(builder, "today_date_label"));
+    g_today_timeline_container = GTK_WIDGET(gtk_builder_get_object(builder, "today_timeline_container"));
+    g_today_page_label = GTK_WIDGET(gtk_builder_get_object(builder, "today_page_label"));
+
+    gtk_label_set_markup(GTK_LABEL(g_today_date_label),
         "<span size='15000' weight='bold'>今天 (06月12日)</span>");
-    gtk_misc_set_alignment(GTK_MISC(g_today_date_label), 0.5, 0.5);
-    gtk_box_pack_start(GTK_BOX(hdr), g_today_date_label, TRUE, TRUE, 0);
-    gtk_box_pack_start(GTK_BOX(page_vbox), hdr, FALSE, FALSE, 0);
+    gtk_label_set_markup(GTK_LABEL(g_today_page_label),
+        "<span size='14000' weight='bold'>第 1 / 1 页</span>");
 
-    // Separator
-    GtkWidget *sep = gtk_hseparator_new();
-    gtk_box_pack_start(GTK_BOX(page_vbox), sep, FALSE, FALSE, 0);
+    g_object_ref(g_today_date_label);
+    g_object_ref(g_today_timeline_container);
+    g_object_ref(g_today_page_label);
 
-    // Timeline container
-    g_today_timeline_container = gtk_vbox_new(FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(page_vbox), g_today_timeline_container, TRUE, TRUE, 0);
-
-    // Pagination bar
-    GtkWidget *pgbar = gtk_hbox_new(FALSE, 12);
-    gtk_container_set_border_width(GTK_CONTAINER(pgbar), 4);
-    GtkWidget *prev = gtk_button_new_with_label("上一页");
-    g_today_page_label = gtk_label_new(NULL);
-    gtk_label_set_markup(GTK_LABEL(g_today_page_label), "<span size='14000' weight='bold'>第 1 / 1 页</span>");
-    GtkWidget *next = gtk_button_new_with_label("下一页");
+    // Connect pagination signals
+    GtkWidget *prev = GTK_WIDGET(gtk_builder_get_object(builder, "today_prev_btn"));
+    GtkWidget *next = GTK_WIDGET(gtk_builder_get_object(builder, "today_next_btn"));
     g_signal_connect(prev, "clicked", G_CALLBACK(on_prev_page), NULL);
     g_signal_connect(next, "clicked", G_CALLBACK(on_next_page), NULL);
-    gtk_box_pack_start(GTK_BOX(pgbar), prev, FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(pgbar), g_today_page_label, TRUE, TRUE, 0);
-    gtk_box_pack_start(GTK_BOX(pgbar), next, FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(page_vbox), pgbar, FALSE, FALSE, 0);
 
+    g_object_unref(builder);
     rebuild_timeline();
-    return page_vbox;
+    return page;
 }

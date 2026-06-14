@@ -90,7 +90,7 @@ static GtkWidget* create_book_row(int book_idx) {
 
     gtk_box_pack_start(GTK_BOX(hbox), vbox, TRUE, TRUE, 0);
 
-    // Click → show detail
+    // Click -> show detail
     g_signal_connect(eb, "button-press-event", G_CALLBACK(on_book_row_clicked), GINT_TO_POINTER(book_idx));
 
     return eb;
@@ -121,7 +121,6 @@ void rebuild_book_list() {
         if (g_filter_unfinished && g_books[i].finished) continue;
         indices[n++] = i;
     }
-
     // Sort
     if (g_sort_mode == 0) qsort(indices, n, sizeof(int), cmp_progress_desc);
     else if (g_sort_mode == 1) qsort(indices, n, sizeof(int), cmp_time_desc);
@@ -148,8 +147,7 @@ void rebuild_book_list() {
     }
 
     // Update pagination label
-    GtkWidget *page_lbl = (GtkWidget*)g_object_get_data(G_OBJECT(g_books_page_widget), "page-label");
-    if (page_lbl) refresh_pagination_label(page_lbl, total_pages);
+    if (g_books_page_label) refresh_pagination_label(g_books_page_label, total_pages);
 
     gtk_widget_show_all(g_books_list_container);
 }
@@ -324,60 +322,47 @@ void back_to_book_list() {
 }
 
 GtkWidget* create_books_page() {
-    GtkWidget *page_vbox = gtk_vbox_new(FALSE, 6);
-    gtk_container_set_border_width(GTK_CONTAINER(page_vbox), 6);
-    g_books_page_widget = page_vbox;
+    GtkBuilder *builder = load_ui("books_page.ui");
+    if (!builder) return gtk_vbox_new(FALSE, 0);
 
-    // Control bar
-    g_books_ctrl = gtk_hbox_new(FALSE, 8);
-    gtk_container_set_border_width(GTK_CONTAINER(g_books_ctrl), 4);
+    GtkWidget *page = GTK_WIDGET(gtk_builder_get_object(builder, "books_page"));
+    if (!page || !GTK_IS_WIDGET(page)) { g_object_unref(builder); return gtk_vbox_new(FALSE, 0); }
+    g_object_ref_sink(page);
+    g_books_page_widget = page;
 
-    GtkWidget *filter_btn = gtk_toggle_button_new_with_label("仅显示未读完");
-    g_signal_connect(filter_btn, "toggled", G_CALLBACK(on_filter_toggled), NULL);
+    g_books_ctrl = GTK_WIDGET(gtk_builder_get_object(builder, "books_ctrl"));
+    g_books_list_container = GTK_WIDGET(gtk_builder_get_object(builder, "books_list_container"));
+    g_books_detail_container = GTK_WIDGET(gtk_builder_get_object(builder, "books_detail_container"));
+    g_books_pgbar = GTK_WIDGET(gtk_builder_get_object(builder, "books_pgbar"));
+    g_books_page_label = GTK_WIDGET(gtk_builder_get_object(builder, "books_page_label"));
 
-    GtkWidget *sort_lbl = gtk_label_new(NULL);
+    gtk_label_set_markup(GTK_LABEL(g_books_page_label),
+        "<span size='14000' weight='bold'>第 1 / 1 页</span>");
+    GtkWidget *sort_lbl = GTK_WIDGET(gtk_builder_get_object(builder, "sort_lbl"));
     gtk_label_set_markup(GTK_LABEL(sort_lbl), "<span size='14000' weight='bold'>排序:</span>");
 
-    GtkWidget *s0 = gtk_button_new_with_label("进度");
-    GtkWidget *s1 = gtk_button_new_with_label("时长");
-    GtkWidget *s2 = gtk_button_new_with_label("字母");
+    g_object_ref(g_books_ctrl);
+    g_object_ref(g_books_list_container);
+    g_object_ref(g_books_detail_container);
+    g_object_ref(g_books_pgbar);
+    g_object_ref(g_books_page_label);
+
+    GtkWidget *filter_btn = GTK_WIDGET(gtk_builder_get_object(builder, "filter_btn"));
+    g_signal_connect(filter_btn, "toggled", G_CALLBACK(on_filter_toggled), NULL);
+
+    GtkWidget *s0 = GTK_WIDGET(gtk_builder_get_object(builder, "sort_btn_progress"));
+    GtkWidget *s1 = GTK_WIDGET(gtk_builder_get_object(builder, "sort_btn_time"));
+    GtkWidget *s2 = GTK_WIDGET(gtk_builder_get_object(builder, "sort_btn_alpha"));
     g_signal_connect(s0, "clicked", G_CALLBACK(on_sort_clicked), GINT_TO_POINTER(0));
     g_signal_connect(s1, "clicked", G_CALLBACK(on_sort_clicked), GINT_TO_POINTER(1));
     g_signal_connect(s2, "clicked", G_CALLBACK(on_sort_clicked), GINT_TO_POINTER(2));
 
-    gtk_box_pack_start(GTK_BOX(g_books_ctrl), filter_btn, FALSE, FALSE, 0);
-    gtk_box_pack_end(GTK_BOX(g_books_ctrl), s2, FALSE, FALSE, 0);
-    gtk_box_pack_end(GTK_BOX(g_books_ctrl), s1, FALSE, FALSE, 0);
-    gtk_box_pack_end(GTK_BOX(g_books_ctrl), s0, FALSE, FALSE, 0);
-    gtk_box_pack_end(GTK_BOX(g_books_ctrl), sort_lbl, FALSE, FALSE, 0);
-
-    gtk_box_pack_start(GTK_BOX(page_vbox), g_books_ctrl, FALSE, FALSE, 0);
-
-    // List container
-    g_books_list_container = gtk_vbox_new(FALSE, 2);
-    gtk_box_pack_start(GTK_BOX(page_vbox), g_books_list_container, TRUE, TRUE, 0);
-
-    // Detail container (hidden initially)
-    g_books_detail_container = gtk_vbox_new(FALSE, 4);
-    gtk_box_pack_start(GTK_BOX(page_vbox), g_books_detail_container, TRUE, TRUE, 0);
-    gtk_widget_hide(g_books_detail_container);
-
-    // Pagination bar
-    g_books_pgbar = gtk_hbox_new(FALSE, 12);
-    gtk_container_set_border_width(GTK_CONTAINER(g_books_pgbar), 4);
-    GtkWidget *prev = gtk_button_new_with_label("上一页");
-    GtkWidget *page_lbl = gtk_label_new(NULL);
-    gtk_label_set_markup(GTK_LABEL(page_lbl), "<span size='14000' weight='bold'>第 1 / 1 页</span>");
-    GtkWidget *next = gtk_button_new_with_label("下一页");
+    GtkWidget *prev = GTK_WIDGET(gtk_builder_get_object(builder, "books_prev_btn"));
+    GtkWidget *next = GTK_WIDGET(gtk_builder_get_object(builder, "books_next_btn"));
     g_signal_connect(prev, "clicked", G_CALLBACK(on_prev_page), NULL);
     g_signal_connect(next, "clicked", G_CALLBACK(on_next_page), NULL);
-    gtk_box_pack_start(GTK_BOX(g_books_pgbar), prev, FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(g_books_pgbar), page_lbl, TRUE, TRUE, 0);
-    gtk_box_pack_start(GTK_BOX(g_books_pgbar), next, FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(page_vbox), g_books_pgbar, FALSE, FALSE, 0);
 
-    g_object_set_data(G_OBJECT(page_vbox), "page-label", page_lbl);
-
+    g_object_unref(builder);
     rebuild_book_list();
-    return page_vbox;
+    return page;
 }

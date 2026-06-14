@@ -54,6 +54,10 @@ extern GtkWidget *g_today_page_label;
 extern int g_today_page;
 extern const int SESSIONS_PER_PAGE;
 
+// ==================== Globals (builder) ====================
+
+extern GtkWidget *g_books_page_label;
+
 // ==================== Utilities ====================
 
 void log_debug(const char* msg);
@@ -61,5 +65,9 @@ int days_in_month(int y, int m);
 int first_weekday_of_month(int y, int m);
 void parse_pango_color(const char* hex, GdkColor *out);
 void destroy_double_ptr(gpointer data, GClosure *closure);
+
+// ==================== UI Loader ====================
+
+GtkBuilder* load_ui(const char *filename);
 
 #endif

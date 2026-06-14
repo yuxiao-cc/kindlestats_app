@@ -1,0 +1,12 @@
+build/
+builddir/
+*.exe
+*.dll
+*.o
+*.obj
+*.log
+compile_commands.json
+.meson/
+meson-info/
+meson-logs/
+meson-private/

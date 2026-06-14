@@ -1,4 +1,4 @@
-#include "shared.h"
+﻿#include "shared.h"
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -62,6 +62,7 @@ int g_today_day_idx = 0;
 GtkWidget *g_today_date_label = NULL;
 GtkWidget *g_today_timeline_container = NULL;
 GtkWidget *g_today_page_label = NULL;
+GtkWidget *g_books_page_label = NULL;
 int g_today_page = 0;
 const int SESSIONS_PER_PAGE = 5;
 

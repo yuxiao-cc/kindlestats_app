@@ -1,0 +1,73 @@
+<?xml version="1.0"?>
+<interface>
+  <object class="GtkVBox" id="today_page">
+    <property name="spacing">6</property>
+    <property name="border_width">6</property>
+    <child>
+      <object class="GtkHBox" id="today_hdr">
+        <property name="spacing">8</property>
+        <property name="border_width">4</property>
+        <child>
+          <object class="GtkLabel" id="today_date_label">
+            <property name="label">今天 (06月12日)</property>
+            <property name="xalign">0.5</property>
+            <property name="yalign">0.5</property>
+          </object>
+          <packing>
+            <property name="expand">True</property>
+            <property name="fill">True</property>
+          </packing>
+        </child>
+      </object>
+      <packing>
+        <property name="expand">False</property>
+        <property name="fill">False</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkHSeparator" id="today_sep"/>
+      <packing>
+        <property name="expand">False</property>
+        <property name="fill">False</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkVBox" id="today_timeline_container">
+        <property name="spacing">0</property>
+      </object>
+      <packing>
+        <property name="expand">True</property>
+        <property name="fill">True</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkHBox" id="today_pgbar">
+        <property name="spacing">12</property>
+        <property name="border_width">4</property>
+        <child>
+          <object class="GtkButton" id="today_prev_btn">
+            <property name="label">上一页</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkLabel" id="today_page_label">
+            <property name="label">第 1 / 1 页</property>
+          </object>
+          <packing>
+            <property name="expand">True</property>
+            <property name="fill">True</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkButton" id="today_next_btn">
+            <property name="label">下一页</property>
+          </object>
+        </child>
+      </object>
+      <packing>
+        <property name="expand">False</property>
+        <property name="fill">False</property>
+      </packing>
+    </child>
+  </object>
+</interface>

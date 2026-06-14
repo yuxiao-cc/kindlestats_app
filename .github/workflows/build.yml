@@ -37,4 +37,6 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: kindlestats_app
-        path: kindlestats_app
+        path: |
+          kindlestats_app
+          ui/
