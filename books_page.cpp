@@ -295,18 +295,27 @@ void update_book_detail_content(int idx) {
     }
     gtk_box_pack_start(GTK_BOX(g_books_detail_container), grid, FALSE, FALSE, 8);
 
-    // Mini trend chart (title drawn inside)
+    // Mini trend chart
+    GtkWidget *trend_vbox = gtk_vbox_new(FALSE, 2);
+
+    // Title as GtkLabel (same style as dashboard titles)
+    GtkWidget *trend_title = gtk_label_new(NULL);
+    gtk_label_set_markup(GTK_LABEL(trend_title), "<span size='12000' weight='bold'>单本近7次阅读趋势</span>");
+    gtk_misc_set_alignment(GTK_MISC(trend_title), 0.0, 0.5);
+    gtk_box_pack_start(GTK_BOX(trend_vbox), trend_title, FALSE, FALSE, 0);
+
     GtkWidget *trend_eb = gtk_event_box_new();
     GdkColor white; gdk_color_parse("#ffffff", &white);
     gtk_widget_modify_bg(trend_eb, GTK_STATE_NORMAL, &white);
     GtkWidget *trend_da = gtk_drawing_area_new();
-    gtk_widget_set_size_request(trend_da, -1, 200);
+    gtk_widget_set_size_request(trend_da, -1, 240);
     struct TrendData *td = (struct TrendData*)g_malloc(sizeof(struct TrendData));
     memcpy(td->trend, g_books[idx].trend, sizeof(td->trend));
     g_signal_connect_data(trend_da, "expose-event", G_CALLBACK(on_expose_mini_trend),
                           td, (GClosureNotify)g_free, (GConnectFlags)0);
     gtk_container_add(GTK_CONTAINER(trend_eb), trend_da);
-    gtk_box_pack_start(GTK_BOX(g_books_detail_container), trend_eb, FALSE, TRUE, 4);
+    gtk_box_pack_start(GTK_BOX(trend_vbox), trend_eb, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(g_books_detail_container), trend_vbox, FALSE, TRUE, 4);
 
     gtk_widget_show_all(g_books_detail_container);
 }

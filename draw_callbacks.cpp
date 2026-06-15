@@ -340,25 +340,19 @@ gboolean on_expose_mini_trend(GtkWidget *widget, GdkEventExpose *event, gpointer
     for (int i = 0; i < 7; i++) if (td->trend[i] > maxv) maxv = td->trend[i];
     if (maxv == 0) maxv = 1;
 
-    // Title inside chart
-    cairo_set_source_rgb(cr, 0, 0, 0);
-    cairo_set_font_size(cr, 22);
-    cairo_select_font_face(cr, "Sans", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
-    cairo_move_to(cr, 8, 26);
-    cairo_show_text(cr, "单本近7次阅读趋势");
-
+    // Axis line
     cairo_set_source_rgb(cr, 0, 0, 0);
     cairo_set_line_width(cr, 1);
-    cairo_move_to(cr, 8, ph - 30);
-    cairo_line_to(cr, pw - 8, ph - 30);
+    cairo_move_to(cr, 8, ph - 24);
+    cairo_line_to(cr, pw - 8, ph - 24);
     cairo_stroke(cr);
 
     cairo_set_font_size(cr, 18);
 
     for (int i = 0; i < 7; i++) {
         double x = 8 + i * (slot + 16) + (slot - bw) / 2;
-        double h = (td->trend[i] / maxv) * (ph - 66);
-        double y = ph - 30 - h;
+        double h = (td->trend[i] / maxv) * (ph - 50);
+        double y = ph - 24 - h;
         cairo_set_source_rgb(cr, 0.3, 0.3, 0.3);
         cairo_rectangle(cr, x, y, bw, h);
         cairo_fill(cr);
@@ -372,7 +366,7 @@ gboolean on_expose_mini_trend(GtkWidget *widget, GdkEventExpose *event, gpointer
         else strcpy(lbl, "-");
         cairo_text_extents_t ext;
         cairo_text_extents(cr, lbl, &ext);
-        cairo_move_to(cr, x + bw/2 - ext.width/2, ph - 8);
+        cairo_move_to(cr, x + bw/2 - ext.width/2, ph - 6);
         cairo_show_text(cr, lbl);
     }
 
