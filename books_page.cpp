@@ -302,6 +302,9 @@ void update_book_detail_content(int idx) {
     GtkWidget *trend_title = gtk_label_new(NULL);
     gtk_label_set_markup(GTK_LABEL(trend_title), "<span size='12000' weight='bold'>单本近7次阅读趋势</span>");
     gtk_misc_set_alignment(GTK_MISC(trend_title), 0.0, 0.5);
+    GdkColor title_white;
+    gdk_color_parse("#ffffff", &title_white);
+    gtk_widget_modify_bg(trend_title, GTK_STATE_NORMAL, &title_white);
     gtk_box_pack_start(GTK_BOX(trend_vbox), trend_title, FALSE, FALSE, 0);
 
     GtkWidget *trend_eb = gtk_event_box_new();
